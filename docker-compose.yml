@@ -6,10 +6,8 @@ services:
     image: postgres:14.3-alpine
     volumes:
       - ./data/db:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=makemake
+    env_file:
+      - ./project/.env
   web:
     container_name: django-web
     build: ./project
