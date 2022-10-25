@@ -1,5 +1,5 @@
-from django.http import HttpResponse
+from django.views.generic.base import TemplateView
 
+class HomePageView(TemplateView):
 
-def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+    template_name = "index.html"
