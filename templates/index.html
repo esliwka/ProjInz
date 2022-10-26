@@ -5,15 +5,12 @@
 <script type="text/javascript" src="{% static 'js/encryption.js' %}"></script>
 
 
-
-<h1>Hello</h1>
-
 <h2>Szyfrowanie:</h2>
 <form onsubmit="encryptMessage()">
     <label for="message">wiadomość</label><br>
     <input required id="message" type="text"><br>
     <label for="pass">passphrase</label><br>
-    <input required id="pass" type="text"><br>
+    <input required id="pass" type="text"><br><br>
     <input type="submit">
 </form>
 
@@ -22,6 +19,6 @@
     <label for="encrypted_message">wiadomość</label><br>
     <input required id="encrypted_message" type="text"><br>
     <label for="passp">passphrase</label><br>
-    <input required id="passp" type="text"><br>
+    <input required id="passp" type="text"><br><br>
     <input type="submit">
 </form>
