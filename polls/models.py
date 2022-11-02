@@ -1,4 +1,5 @@
 from django.db import models
+from project.settings import AUTH_USER_MODEL
 
 class UserData(models.Model):
     user_data = models.CharField(max_length=250)

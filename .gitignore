@@ -2,11 +2,6 @@
 *.env
 __pycache__
 __init__.py
-project/__pycache__
 project/.env
-project/__pycache__/
-polls/__pycache__
-users/__pycache__
-migrations/__pycache__
 /data
-project/__pycache__/*
+*/__pycache__/*
