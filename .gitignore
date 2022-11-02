@@ -5,3 +5,4 @@ __init__.py
 project/.env
 /data
 */__pycache__/*
+*/settings.cpython-310.pyc
