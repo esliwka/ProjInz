@@ -3,22 +3,23 @@
 <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
 
 <h2>Ankieta</h2>
-<h3 id="uid"></h3>
+<h3 id="uid">{{user}}</h3>
 <form method="post">
-    <label for="message">favourite language</label><br>
+    {% csrf_token %}
+    <label >favourite language</label><br>
     <input type="radio" id="c" name="fav_language" value="C">
     <label for="c">C</label><br>
     <input type="radio" id="rust" name="fav_language" value="Rust">
     <label for="rust">Rust</label><br>
     <input type="radio" id="python" name="fav_language" value="Python">
     <label for="python">Python</label><br>
-
+    <input type="hidden" name="uid" value="{{user}}" />
     <input type="submit">
 </form>
 
 <h2>Odczyt</h2>
-<form>
-    <label for="message">wiadomość</label><br>
-    <input required id="message" type="text"><br>
+<form method="post">
+    <label for="req_uid">User ID - check if answered</label><br>
+    <input required id="req_uid" type="text"><br>
     <input type="submit">
 </form>
