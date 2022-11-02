@@ -1,24 +1,24 @@
 {% load static %}
 
 <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
-<script type="text/javascript" src="{% static 'js/crypto-js/cryptojs.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/encryption.js' %}"></script>
 
+<h2>Ankieta</h2>
+<h3 id="uid"></h3>
+<form method="post">
+    <label for="message">favourite language</label><br>
+    <input type="radio" id="c" name="fav_language" value="C">
+    <label for="c">C</label><br>
+    <input type="radio" id="rust" name="fav_language" value="Rust">
+    <label for="rust">Rust</label><br>
+    <input type="radio" id="python" name="fav_language" value="Python">
+    <label for="python">Python</label><br>
 
-<h2>Szyfrowanie:</h2>
-<form onsubmit="encryptMessage()">
-    <label for="message">wiadomość</label><br>
-    <input required id="message" type="text"><br>
-    <label for="pass">passphrase</label><br>
-    <input required id="pass" type="text"><br><br>
     <input type="submit">
 </form>
 
-<h2>Odszyfrowanie:</h2>
-<form onsubmit="decryptMessage()">
-    <label for="encrypted_message">wiadomość</label><br>
-    <input required id="encrypted_message" type="text"><br>
-    <label for="passp">passphrase</label><br>
-    <input required id="passp" type="text"><br><br>
+<h2>Odczyt</h2>
+<form>
+    <label for="message">wiadomość</label><br>
+    <input required id="message" type="text"><br>
     <input type="submit">
 </form>
