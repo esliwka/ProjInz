@@ -5,3 +5,6 @@ __init__.py
 project/__pycache__
 project/.env
 project/__pycache__/
+polls/__pycache__
+users/__pycache__
+migrations/__pycache__
