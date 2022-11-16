@@ -11,4 +11,5 @@ function decryptMessage(){
     var decrypted = CryptoJS.AES.decrypt(message, pass);
     decrypted = decrypted.toString(CryptoJS.enc.Utf8);
     alert(decrypted)
+    //aaa
 }
