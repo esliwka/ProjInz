@@ -3,7 +3,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
 
 <h2>Ankieta</h2>
-<h3 id="uid">{{user}}</h3>
+<h3 id="uid">{{user.name}}</h3>
 <form method="post">
     {% csrf_token %}
     <label >favourite language</label><br>

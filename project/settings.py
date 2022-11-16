@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["0.0.0.0"]
 
+ENCRYPT_KEY = os.environ.get('ENCRYPT_KEY')
 
 # Application definition
 
