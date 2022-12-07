@@ -55,6 +55,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'project.urls'
 
+# if os.environ.get('REDIS_URL'):
+#     CACHES = {
+#         'default':os.environ.get('REDIS_URL')
+#     }
+
 TEMPLATES_DIR = os.path.join('templates')
 
 TEMPLATES = [

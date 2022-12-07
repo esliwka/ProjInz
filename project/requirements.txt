@@ -9,3 +9,5 @@ psycopg2-binary==2.9.3
 pycparser==2.21
 SQLAlchemy==1.4.37
 sqlparse==0.4.2
+redis==4.4.0
+redis-om==0.1.1
