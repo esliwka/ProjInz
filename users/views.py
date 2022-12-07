@@ -18,5 +18,6 @@ my_random_user = random.choice(users)
 hashed_one = sec_hash(my_random_user)
 hashed_two = sec_hash(my_random_user)
 
+
 def users_view(request):
-    return render(request, 'users.html', {'user': (hashed_one , my_random_user, hashed_two , hashed_one == hashed_two)})
+    return render(request, 'users.html', {'user': (hashed_one, my_random_user, hashed_two, hashed_one == hashed_two)})
