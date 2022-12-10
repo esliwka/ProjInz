@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from .models import UserData, Polls, UserAnswers, AvailableAnswers
+from .models import Users, Polls, OpenQuestions, OpenAnswers, ClosedQuestions, ClosedAnswers
 
 
-@admin.register(UserData)
+@admin.register(Users)
 class UserDataAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_data')
 
@@ -14,13 +14,25 @@ class PollsAdmin(admin.ModelAdmin):
     list_display = ('id', 'poll_name', 'poll_text')
 
 
-@admin.register(UserAnswers)
+@admin.register(OpenQuestions)
 class UserAnswersAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'poll_id', 'answer')
     list_filter = ('user_id', 'poll_id')
 
 
-@admin.register(AvailableAnswers)
+@admin.register(OpenAnswers)
+class AvailableAnswersAdmin(admin.ModelAdmin):
+    list_display = ('id', 'poll_id', 'answer', 'times_chosen')
+    list_filter = ('poll_id',)
+
+
+@admin.register(ClosedQuestions)
+class UserAnswersAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user_id', 'poll_id', 'answer')
+    list_filter = ('user_id', 'poll_id')
+
+
+@admin.register(ClosedAnswers)
 class AvailableAnswersAdmin(admin.ModelAdmin):
     list_display = ('id', 'poll_id', 'answer', 'times_chosen')
     list_filter = ('poll_id',)

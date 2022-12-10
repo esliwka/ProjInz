@@ -24,7 +24,7 @@ class TokenPolls(models.Model):
 class Polls(models.Model):
     poll_name = models.CharField(max_length=250)
     poll_text = models.TextField()
-    poll_owner = models.OneToOneRel(Users, on_delete=models.CASCADE)
+    poll_owner = models.OneToOneField(Users, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.poll_name
@@ -33,9 +33,6 @@ class Polls(models.Model):
 class PollRespondents(models.Model):
     user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
     poll_id = models.ForeignKey(Polls, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.poll_name
 
 
 class UserPollStatus(models.Model):
