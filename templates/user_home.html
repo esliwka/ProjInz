@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+
+<link rel="stylesheet" href="{static 'css/user_home.css'}">
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="animated fadeInDown delay-1s">Witaj, {{ user.username }}!</h1>
+    <p class="animated fadeInUp delay-2s">Twoje dane:</p>
+    <ul class="animated fadeInLeft delay-3s">
+        <li>Imie: {{ user.first_name }}</li>
+        <li>Nazwisko: {{ user.last_name }}</li>
+        <li>Email: {{ user.email }}</li>
+        <li>Rola: {{ user.role }}</li>
+    </ul>
+</div>
+{% endblock %}

@@ -6,7 +6,7 @@ from .models import Users, Polls, OpenQuestions, OpenAnswers, ClosedQuestions, C
 
 @admin.register(Users)
 class UserDataAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_data')
+    list_display = ('id', 'first_name', 'last_name')
 
 
 @admin.register(Polls)
@@ -22,8 +22,8 @@ class UserAnswersAdmin(admin.ModelAdmin):
 
 @admin.register(OpenAnswers)
 class AvailableAnswersAdmin(admin.ModelAdmin):
-    list_display = ('id', 'poll_id', 'answer', 'times_chosen')
-    list_filter = ('poll_id',)
+    list_display = ('id', 'question_id', 'answer', 'times_chosen')
+    list_filter = ('question_id',)
 
 
 @admin.register(ClosedQuestions)
@@ -34,5 +34,6 @@ class UserAnswersAdmin(admin.ModelAdmin):
 
 @admin.register(ClosedAnswers)
 class AvailableAnswersAdmin(admin.ModelAdmin):
-    list_display = ('id', 'poll_id', 'answer', 'times_chosen')
-    list_filter = ('poll_id',)
+    list_display = ('id', 'question_id', 'answer', 'times_chosen')
+    list_filter = ('question_id',)
+

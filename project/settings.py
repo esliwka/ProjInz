@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'polls',
     'users',
     'django_extensions',
+    'bootstrap4',
 ]
 
 MIDDLEWARE = [

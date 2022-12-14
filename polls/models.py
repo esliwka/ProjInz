@@ -44,24 +44,18 @@ class UserPollStatus(models.Model):
         return self.answered
 
 
-class ClosedQuestions(models.Model):
+class OpenQuestions(models.Model):
+    user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
     poll_id = models.ForeignKey(Polls, on_delete=models.CASCADE)
+    answer = models.TextField()
     question_text = models.TextField()
 
     def __str__(self):
         return self.question_text
 
 
-class ClosedAnswers(models.Model):
-    question_id = models.ForeignKey(ClosedQuestions, on_delete=models.CASCADE)
-    answer = models.TextField()
-    times_chosen = models.IntegerField(default=0)
-
-    def __str__(self):
-        return self.times_chosen
-
-
-class OpenQuestions(models.Model):
+class ClosedQuestions(models.Model):
+    user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
     poll_id = models.ForeignKey(Polls, on_delete=models.CASCADE)
     answer = models.TextField()
     question_text = models.TextField()
@@ -71,8 +65,18 @@ class OpenQuestions(models.Model):
 
 
 class OpenAnswers(models.Model):
+    question_id = models.ForeignKey(OpenQuestions, on_delete=models.CASCADE)
+    answer = models.TextField()
+    times_chosen = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.answer
+
+
+class ClosedAnswers(models.Model):
     question_id = models.ForeignKey(ClosedQuestions, on_delete=models.CASCADE)
     answer = models.TextField()
+    times_chosen = models.IntegerField(default=0)
 
     def __str__(self):
         return self.answer
