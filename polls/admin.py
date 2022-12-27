@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from .models import Users, Polls, OpenQuestions, OpenAnswers, ClosedQuestions, ClosedAnswers
-
-
-@admin.register(Users)
-class UserDataAdmin(admin.ModelAdmin):
-    list_display = ('id', 'first_name', 'last_name')
+import users.models
+from .models import Polls, OpenQuestions, OpenAnswers, ClosedQuestions, ClosedAnswers
+from project.settings import AUTH_USER_MODEL
 
 
 @admin.register(Polls)
@@ -36,4 +33,3 @@ class UserAnswersAdmin(admin.ModelAdmin):
 class AvailableAnswersAdmin(admin.ModelAdmin):
     list_display = ('id', 'question_id', 'answer', 'times_chosen')
     list_filter = ('question_id',)
-
