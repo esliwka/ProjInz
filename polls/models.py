@@ -1,5 +1,7 @@
 from django.db import models
-from project.settings import AUTH_USER_MODEL
+
+from users.models import CustomUser
+# from project.settings import AUTH_USER_MODEL
 
 
 # class Users(models.Model):
@@ -24,19 +26,19 @@ class TokenPolls(models.Model):
 class Polls(models.Model):
     poll_name = models.CharField(max_length=250)
     poll_text = models.TextField()
-    poll_owner = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    poll_owner = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.poll_name
 
 
 class PollRespondents(models.Model):
-    user_id = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     poll_id = models.ForeignKey(Polls, on_delete=models.CASCADE)
 
 
 class UserPollStatus(models.Model):
-    user_id = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     poll_id = models.ForeignKey(Polls, on_delete=models.CASCADE)
     answered = models.BooleanField()
 
@@ -45,7 +47,7 @@ class UserPollStatus(models.Model):
 
 
 class OpenQuestions(models.Model):
-    user_id = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     poll_id = models.ForeignKey(Polls, on_delete=models.CASCADE)
     answer = models.TextField()
     question_text = models.TextField()
@@ -55,7 +57,7 @@ class OpenQuestions(models.Model):
 
 
 class ClosedQuestions(models.Model):
-    user_id = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     poll_id = models.ForeignKey(Polls, on_delete=models.CASCADE)
     answer = models.TextField()
     question_text = models.TextField()
@@ -74,7 +76,7 @@ class OpenAnswers(models.Model):
 
 
 class ClosedAnswers(models.Model):
-    question_id = models.ForeignKey(ClosedQuestions, on_delete=models.CASCADE)
+    question_id = models.ForeignKey(ClosedQuestions, on_delete=models.CASCADE, default=0)
     answer = models.TextField()
     times_chosen = models.IntegerField(default=0)
 

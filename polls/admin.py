@@ -3,7 +3,7 @@ from django.contrib import admin
 
 import users.models
 from .models import Polls, OpenQuestions, OpenAnswers, ClosedQuestions, ClosedAnswers
-from project.settings import AUTH_USER_MODEL
+# from project.settings import AUTH_USER_MODEL
 
 
 @admin.register(Polls)
