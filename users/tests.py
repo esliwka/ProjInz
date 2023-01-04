@@ -1,37 +1,51 @@
+from django.db import IntegrityError
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
+class CustomUserTests(TestCase):
 
-class UsersManagersTests(TestCase):
+    def test_create_user_with_email_successful(self):
+        """Test creating a new user with an email is successful"""
+        email = 'test@example.com'
+        password = 'Testpass123'
+        user = get_user_model().objects.create_user(
+            email=email,
+            password=password
+        )
 
-    def test_create_user(self):
-        User = get_user_model()
-        user = User.objects.create_user(email='test@user.com', password='pas123')
-        self.assertEqual(user.email, 'test@user.com')
-        self.assertTrue(user.is_active)
-        self.assertFalse(user.is_staff)
-        self.assertFalse(user.is_superuser)
-        try:
-            self.assertIsNone(user.username)
-        except AttributeError:
-            pass
-        with self.assertRaises(TypeError):
-            User.objects.create_user()
-        with self.assertRaises(TypeError):
-            User.objects.create_user(email='')
+        self.assertEqual(user.email, email)
+        self.assertTrue(user.check_password(password))
+
+    def test_new_user_email_normalized(self):
+        """Test the email for a new user is normalized"""
+        email = 'test@EXAMPLE.COM'
+        user = get_user_model().objects.create_user(email, 'test123')
+
+        self.assertEqual(user.email, email.lower())
+
+    def test_new_user_invalid_email(self):
+        """Test creating user with no email raises error"""
         with self.assertRaises(ValueError):
-            User.objects.create_user(email='', password='pass123')
+            get_user_model().objects.create_user(None, 'test123')
 
-    def test_create_superuser(self):
-        User = get_user_model()
-        admin_user = User.objects.create_superuser(email='super@user.com', password='pas123')
-        self.assertEqual(admin_user.email, 'super@user.com')
-        self.assertTrue(admin_user.is_active)
-        self.assertTrue(admin_user.is_staff)
-        self.assertTrue(admin_user.is_superuser)
-        try:
-            self.assertIsNone(admin_user.username)
-        except AttributeError:
-            pass
-        with self.assertRaises(ValueError):
-            User.objects.create_superuser(email='super@user.com', password='pas123', is_superuser=False)
+    def test_create_new_superuser(self):
+        """Test creating a new superuser"""
+        user = get_user_model().objects.create_superuser(
+            'test@example.com',
+            'test123'
+        )
+
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.is_staff)
+    
+    def test_create_duplicate_user(self):
+        """Test creating a new user with an existing email raises error"""
+        get_user_model().objects.create_user(
+            'test@example.com',
+            'test123'
+        )
+        with self.assertRaises(IntegrityError):
+            get_user_model().objects.create_user(
+                'test@example.com',
+                'test123'
+            )

@@ -1,20 +1,16 @@
 {% extends 'base.html' %}
-
-{% block styles %}
-
-<link rel="stylesheet" href="{static 'css/user_home.css'}">
-
-{% endblock %}
-
+{% load bootstrap4 %}
 {% block content %}
-<div class="container">
-    <h1 class="animated fadeInDown delay-1s">Witaj, {{ user.username }}!</h1>
-    <p class="animated fadeInUp delay-2s">Twoje dane:</p>
-    <ul class="animated fadeInLeft delay-3s">
-        <li>Imie: {{ user.first_name }}</li>
-        <li>Nazwisko: {{ user.last_name }}</li>
-        <li>Email: {{ user.email }}</li>
-        <li>Rola: {{ user.role }}</li>
-    </ul>
-</div>
+  <div class="container">
+    <h1>Welcome, {{ user.first_name }} {{ user.last_name }}</h1>
+    <p>Your email: {{ user.email }}</p>
+    <p>Your hashed email: {{ hashed_email }}</p>
+    
+    <h2>Change Password</h2>
+    <form method="post" action="{% url 'change_password' %}">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      <input type="submit" value="Change Password">
+    </form>
+  </div>
 {% endblock %}
