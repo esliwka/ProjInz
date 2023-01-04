@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Poll List{% endblock %}
+
+{% block content %}
+  <h1>Poll List</h1>
+
+{% if polls %}
+<ul>
+{% for poll in polls %}
+<li>
+<a href="{% url 'poll_detail' poll.id %}">{{ poll.poll_name }}</a>
+- {{ poll.poll_text}}
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>You have not created any polls yet.</p>
+{% endif %}
+{% endblock %}

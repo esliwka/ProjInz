@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Poll Detail{% endblock %}
+
+{% block content %}
+  <h1>{{ poll.poll_name }}</h1>
+  <p>{{ poll.poll_text }}</p>
+  <h2>Open Questions</h2>
+  {% for open_question in open_questions %}
+    <h3>{{ open_question.question_text }}</h3>
+    {% for open_answer in open_question.openanswer_set.all %}
+      <p>{{ open_answer.answer_text }}</p>
+    {% endfor %}
+  {% empty %}
+    <p>No open questions for this poll.</p>
+  {% endfor %}
+
+  <h2>Closed Questions</h2>
+  {% for closed_question in closed_questions %}
+    <h3>{{ closed_question.question_text }}</h3>
+    {% for closed_answer in closed_question.closedanswer_set.all %}
+      <p>{{ closed_answer.answer_text }}</p>
+    {% endfor %}
+  {% empty %}
+    <p>No closed questions for this poll.</p>
+  {% endfor %}
+{% endblock %}
