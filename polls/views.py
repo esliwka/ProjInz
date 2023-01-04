@@ -4,6 +4,18 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from project.encrypt_util import sec_hash
+from django.core.cache import cache
+
+
+
+
+def redis_test(request):
+    cache.set("key", "test value")
+    redis_response = cache.get('key')
+    # Close the connection
+    cache.close()
+    return render(request, 'redis_test.html', {'redis_response': redis_response})
+
 
 @login_required
 def user_home(request):
