@@ -30,12 +30,15 @@ def poll_list(request):
 def poll_detail(request, poll_id):
     poll = get_object_or_404(Polls, pk=poll_id)
     open_questions = OpenQuestions.objects.filter(poll_id=poll)
-    open_answers = OpenAnswers.object.filter()
     closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
+    closed_questions_pks = ClosedQuestions.objects.filter(poll_id=poll).values("pk")
+    closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions_pks)
     context = {
         'poll': poll,
         'open_questions': open_questions,
         'closed_questions': closed_questions,
+        'closed_questions_pks': closed_questions_pks,
+        'closed_answers': closed_answers,
     }
     return render(request, 'poll_detail.html', context)
 
