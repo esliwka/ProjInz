@@ -14,6 +14,10 @@ class PollForm(forms.Form):
     poll_name = forms.CharField(max_length=200)
     poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False)
 
+class AddQuestionForm(forms.Form):
+    poll_name = forms.CharField(max_length=200)
+    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False)
+
 class QuestionForm(forms.Form):
     question_text = forms.CharField(max_length=200)
 
@@ -26,6 +30,7 @@ def poll_list(request):
 def poll_detail(request, poll_id):
     poll = get_object_or_404(Polls, pk=poll_id)
     open_questions = OpenQuestions.objects.filter(poll_id=poll)
+    open_answers = OpenAnswers.object.filter()
     closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
     context = {
         'poll': poll,
@@ -45,6 +50,18 @@ def create_poll(request):
     else:
         form = PollForm()
     return render(request, 'create_poll.html', {'form': form})
+
+@login_required
+def edit_poll(request):
+    if request.method == 'POST':
+        form = PollForm(request.POST)
+        if form.is_valid():
+            poll = Polls(poll_name=form.cleaned_data['poll_name'], poll_text=form.cleaned_data['poll_text'], poll_owner_id=request.user)
+            poll.save()
+            return redirect('poll_list')
+    else:
+        form = PollForm()
+    return render(request, 'edit_poll.html', {'form': form})
 
 def redis_test(request):
     cache.set("key", "test value")
