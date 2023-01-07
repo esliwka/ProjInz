@@ -5,25 +5,36 @@
 {% block content %}
   <h1>{{ poll.poll_name }}</h1>
   <p>{{ poll.poll_text }}</p>
+
   <h2>Open Questions</h2>
+  <ol>
   {% for open_question in open_questions %}
-    <h3>{{ open_question.question_text }}</h3>
-    {% for open_answer in open_question.openanswer_set.all %}
-      <p>{{ open_answer.answer_text }}</p>
+    <li><p>{{ open_question.question_text }}</p></li>
+    <ul>
+    {% for open_answer in open_answers %}
+      {% if open_answer.question_id_id == open_question.id %}
+        <li><p>{{ open_answer.answer }}</p></li>
+      {% endif %}
     {% endfor %}
+    </ul>
   {% empty %}
     <p>No open questions for this poll.</p>
   {% endfor %}
+  </ol>
 
   <h2>Closed Questions</h2>
+  <ol>
   {% for closed_question in closed_questions %}
-    <h4>{{ closed_question.question_text }}</h4>
+    <li><p>{{ closed_question.question_text }}</p></li>
     <ul>
     {% for closed_answer in closed_answers %}
-      <li>{{ closed_answer.answer }} times chosen: {{ closed_answer.times_chosen }}</li>
+      {% if closed_answer.question_id_id == closed_question.id %}
+        <li>{{ closed_answer.answer }} | times chosen: {{ closed_answer.times_chosen }}</li>
+      {% endif %}
     {% endfor %}
     </ul>
   {% empty %}
     <p>No closed questions for this poll.</p>
   {% endfor %}
+  </ol>
 {% endblock %}

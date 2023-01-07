@@ -5,12 +5,19 @@
 {% block content %}
   <h1>Poll List</h1>
 
+{% if error %}
+    <p class="text-danger">{{ error }}</p>
+{% endif %}
+
 {% if polls %}
 <ul>
 {% for poll in polls %}
 <li>
 <a href="{% url 'poll_detail' poll.id %}">{{ poll.poll_name }}</a>
 - {{ poll.poll_text}}
+{% if user.is_staff %}
+<a href="{% url 'poll_edit' poll.id %}">| Edit Poll </a>
+{% endif %}
 </li>
 {% endfor %}
 </ul>

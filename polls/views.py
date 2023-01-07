@@ -12,19 +12,20 @@ from polls.models import PollRespondents, Polls, ClosedQuestions, OpenQuestions,
 from django.contrib.auth.models import User
 from users.models import CustomUser
 
+from django.http import HttpResponseNotAllowed
 
 class PollForm(forms.Form):
     poll_name = forms.CharField(max_length=200)
     poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False)
 
+class OpenQuestionForm(forms.Form):
+    question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True)
 
-class AddQuestionForm(forms.Form):
-    poll_name = forms.CharField(max_length=200)
-    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False)
+class ClosedQuestionForm(forms.Form):
+    question = forms.CharField(max_length=200)
 
-
-class QuestionForm(forms.Form):
-    question_text = forms.CharField(max_length=200)
+class ClosedQuestionAnswerForm(forms.Form):
+    answer = forms.CharField(max_length=200)
 
 
 class AddRespondentForm(forms.Form):
@@ -48,14 +49,16 @@ def poll_list(request):
 def poll_detail(request, poll_id):
     poll = get_object_or_404(Polls, pk=poll_id)
     open_questions = OpenQuestions.objects.filter(poll_id=poll)
+    open_questions_pks = list(OpenQuestions.objects.filter(poll_id=poll).values_list("pk", flat=True))
+    open_answers = OpenAnswers.objects.filter(question_id__in=open_questions_pks)
     closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
-    closed_questions_pks = ClosedQuestions.objects.filter(poll_id=poll).values("pk")
+    closed_questions_pks = list(ClosedQuestions.objects.filter(poll_id=poll).values_list("pk", flat=True))
     closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions_pks)
     context = {
         'poll': poll,
         'open_questions': open_questions,
+        'open_answers': open_answers,
         'closed_questions': closed_questions,
-        'closed_questions_pks': closed_questions_pks,
         'closed_answers': closed_answers,
     }
     return render(request, 'poll_detail.html', context)
@@ -76,18 +79,59 @@ def create_poll(request):
 
 
 @login_required
-def edit_poll(request):
+def add_open_question(request, poll_id):
     if request.method == 'POST':
-        form = PollForm(request.POST)
+        form = OpenQuestionForm(request.POST)
         if form.is_valid():
-            poll = Polls(poll_name=form.cleaned_data['poll_name'], poll_text=form.cleaned_data['poll_text'],
-                         poll_owner_id=request.user)
-            poll.save()
-            return redirect('poll_list')
-    else:
-        form = PollForm()
-    return render(request, 'edit_poll.html', {'form': form})
+            poll = get_object_or_404(Polls, pk=poll_id)
+            question = OpenQuestions(poll_id=poll, question_text=form.cleaned_data['question'])
+            question.save()
 
+    return poll_edit(request, poll_id)
+
+@login_required
+def add_closed_question(request, poll_id):
+    if request.method == 'POST':
+        form = ClosedQuestionForm(request.POST)
+        if form.is_valid():
+            poll = get_object_or_404(Polls, pk=poll_id)
+            question = ClosedQuestions(poll_id=poll, question_text=form.cleaned_data['question'])
+            question.save()
+
+    return poll_edit(request, poll_id)
+
+@login_required
+def add_answer_to_closed(request, poll_id, question_id):
+    if request.method == 'POST':
+        form = ClosedQuestionAnswerForm(request.POST)
+        if form.is_valid():
+            question = get_object_or_404(ClosedQuestions, pk=question_id)
+            answer = ClosedAnswers(question_id=question, answer=form.cleaned_data['answer'], times_chosen=0)
+            answer.save()
+
+    return poll_edit(request, poll_id)
+
+@login_required
+def poll_edit(request, poll_id):
+    poll = get_object_or_404(Polls, pk=poll_id)
+    if poll.poll_is_finished:
+        polls = Polls.objects.filter(poll_owner_id=request.user.id)
+        return render(request, 'poll_list.html', {'polls': polls, 'error': 'Cannot modify a finished poll'})
+
+    open_questions = OpenQuestions.objects.filter(poll_id=poll)
+    closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
+    closed_questions_pks = list(ClosedQuestions.objects.filter(poll_id=poll).values_list("pk", flat=True))
+    closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions_pks)
+    context = {
+        'poll': poll,
+        'open_questions': open_questions,
+        'closed_questions': closed_questions,
+        'closed_answers': closed_answers,
+        'open_question_form': OpenQuestionForm(),
+        'closed_question_form': ClosedQuestionForm(),
+        'closed_question_answer_form': ClosedQuestionAnswerForm()
+    }
+    return render(request, 'poll_edit.html', context)
 
 @login_required
 def add_respondent(request):

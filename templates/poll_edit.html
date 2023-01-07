@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Poll{% endblock %}
+
+{% block content %}
+  <h1>{{ poll.poll_name }}</h1>
+  <p>{{ poll.poll_text }}</p>
+
+  <h2>Open Questions</h2>
+  <ol>
+  {% for open_question in open_questions %}
+    <li><p>{{ open_question.question_text }}</p></li>
+  {% empty %}
+    <p>No open questions for this poll.</p>
+  {% endfor %}
+  </ol>
+
+  <form method="post" action="{% url 'add_open_question' poll.id %}">
+    {% csrf_token %}
+    {{ open_question_form.as_p }}
+    <input type="submit" value="Add Open Question">
+  </form>
+
+  <h2>Closed Questions</h2>
+  <ol>
+  {% for closed_question in closed_questions %}
+    <li><p>{{ closed_question.question_text }}</p></li>
+    <ol>
+    {% for closed_answer in closed_answers %}
+      {% if closed_answer.question_id_id == closed_question.id %}
+        <li>{{ closed_answer.answer }} </li>
+      {%  endif %}
+    {% endfor %}
+    </ol>
+    <form method="post" action="{% url 'add_answer_to_closed' poll.id closed_question.id %}">
+      {% csrf_token %}
+      {{ closed_question_answer_form.as_p }}
+      <input type="submit" value="Add Answer">
+    </form>
+  {% empty %}
+    <p>No closed questions for this poll.</p>
+  {% endfor %}
+  </ol>
+
+  <form method="post" action="{% url 'add_closed_question' poll.id %}">
+    {% csrf_token %}
+    {{ closed_question_form.as_p }}
+    <input type="submit" value="Add Closed Question">
+  </form>
+{% endblock %}
