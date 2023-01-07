@@ -10,5 +10,6 @@ urlpatterns = [
     path('redis-test/', views.redis_test, name='redis_test'),
     path('create_poll/', views.create_poll, name='create_poll'),
     path('poll-list/', views.poll_list, name='poll_list'),
+    path('add-respondent/', views.add_respondent, name='add_respondent'),
     path('polls/<int:poll_id>/', views.poll_detail, name='poll_detail'),
 ]
