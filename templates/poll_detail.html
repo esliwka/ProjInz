@@ -5,7 +5,12 @@
 {% block content %}
   <h1>{{ poll.poll_name }}</h1>
   <p>{{ poll.poll_text }}</p>
-
+  <h2>Respondents:</h2>
+  <ul>
+    {% for respondent in respondents %}
+    <li><p>{{ respondent.email }}</p></li>
+    {% endfor %}
+  </ul>
   <h2>Open Questions</h2>
   <ol>
   {% for open_question in open_questions %}

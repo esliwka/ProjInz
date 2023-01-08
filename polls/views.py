@@ -54,12 +54,15 @@ def poll_detail(request, poll_id):
     closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
     closed_questions_pks = list(ClosedQuestions.objects.filter(poll_id=poll).values_list("pk", flat=True))
     closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions_pks)
+    respondents_users_ids = PollRespondents.objects.filter(poll_id=poll).values_list("user_id", flat=True)
+    respondents = CustomUser.objects.filter(pk__in=respondents_users_ids)
     context = {
         'poll': poll,
         'open_questions': open_questions,
         'open_answers': open_answers,
         'closed_questions': closed_questions,
         'closed_answers': closed_answers,
+        'respondents': respondents,
     }
     return render(request, 'poll_detail.html', context)
 
