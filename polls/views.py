@@ -11,8 +11,76 @@ from polls.models import PollRespondents, Polls, ClosedQuestions, OpenQuestions,
     UserPollStatus, TokenPolls
 from django.contrib.auth.models import User
 from users.models import CustomUser
-
 from django.http import HttpResponseNotAllowed
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.core import serializers
+import json
+import io
+from django.http import FileResponse
+
+
+
+@login_required
+def poll_response(request):
+    user_polls = PollRespondents.objects.filter(user_id=request.user)
+    user_polls_pks = list(user_polls.values_list("poll_id", flat=True))
+    polls = Polls.objects.filter(pk__in=user_polls_pks)
+
+    if request.method == 'POST':
+        poll_id = 5
+        # poll_id = request.POST.get('poll_id')
+        poll = get_object_or_404(Polls, pk=poll_id)
+
+        open_questions = OpenQuestions.objects.filter(poll_id=poll)
+        closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
+        closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions)
+
+        answers = {}
+        for question in open_questions:
+            answers[question.id] = request.POST.get(str(question.id))
+
+        for question in closed_questions:
+            answers[question.id] = request.POST.getlist(str(question.id))
+
+        
+        json_data = json.dumps(answers)
+        # Connecting to Redis
+        cache.set(poll_id, json_data)
+
+        # Set the user's poll status as answered
+        UserPollStatus.objects.filter(poll_id=poll, user_id=request.user).update(answered=True)
+        context = {'json_data_hash': json_data, 'poll_id': poll_id}
+        return redirect('poll_response_success', context=context)
+
+
+    context = {'polls': polls}
+    return render(request, 'poll_response.html', context)
+
+
+@login_required
+def poll_response_download(request, poll_id):
+    json_data = cache.get(poll_id) # get the json data from the cache
+    hash_data = sec_hash(json_data)
+    file = io.StringIO(hash_data)
+    response = FileResponse(file, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename="hash.txt"'
+    return response
+
+
+
+@login_required
+def poll_response_success(request, context):
+    poll_id = context.get('poll_id')
+    json_data = cache.get(poll_id) # get the json data from the cache
+    hash_data = sec_hash(json_data)
+    file = io.StringIO(hash_data)
+    response = FileResponse(file, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename="hash.txt"'
+    return render(request, 'poll_response_success.html', {'json_data_hash': hash_data })
+
+
+
 
 class PollForm(forms.Form):
     poll_name = forms.CharField(max_length=200)

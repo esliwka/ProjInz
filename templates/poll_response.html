@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1>Poll Response</h1>
+    <form action="{% url 'poll_response' %}" method="post">
+        {% csrf_token %}
+        <ul>
+            {% for poll in polls %}
+                <li>
+                    <h2>{{ poll.poll_name }}</h2>
+                    <p>{{ poll.poll_text }}</p>
+                    {% for question in poll.openquestion_set.all %}
+                        <div>
+                            <p>{{ question.question_text }}</p>
+                            <textarea name="open_question_{{ question.id }}"></textarea>
+                        </div>
+                    {% endfor %}
+                    {% for question in poll.closedquestions_set.all %}
+                        <div>
+                            <p>{{ question.question_text }}</p>
+                            {% for answer in question.closedanswers_set.all %}
+                                <label>
+                                    <input type="radio" name="closed_question_{{ question.id }}" value="{{ answer.id }}">
+                                    {{ answer.answer }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </li>
+            {% endfor %}
+        </ul>
+        <input type="submit" value="Submit">
+    </form>
+{% endblock %}

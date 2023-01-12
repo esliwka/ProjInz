@@ -16,4 +16,9 @@ urlpatterns = [
     path('polls/<int:poll_id>/add_open_question', views.add_open_question, name='add_open_question'),
     path('polls/<int:poll_id>/add_closed_question', views.add_closed_question, name='add_closed_question'),
     path('polls/<int:poll_id>/<int:question_id>/add_answer_to_closed', views.add_answer_to_closed, name='add_answer_to_closed'),
+    path('poll_response/', views.poll_response, name='poll_response'),
+    path('poll_response_success/', views.poll_response_success, name='poll_response_success'),
+    path('poll_response_download/<int:poll_id>/', views.poll_response_download, name='poll_response_download'),
+
+
 ]
