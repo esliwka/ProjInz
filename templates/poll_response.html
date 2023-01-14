@@ -1,33 +1,47 @@
 {% extends 'base.html' %}
 {% block content %}
     <h1>Poll Response</h1>
+    <h2>{{ current_poll.poll_name }}</h2>
     <form action="{% url 'poll_response' %}" method="post">
         {% csrf_token %}
+        <div class="dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Zmień ankietę. Obecnie wybrana ankieta: <span class="current-poll-name">{{ current_poll.poll_name }}</span>
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    {% for poll in polls %}
+        <a class="dropdown-item {% if poll.id == poll_id %}active{% endif %}" href="{% url 'poll_response' %}?poll_id={{ poll.id }}">{{ poll.poll_name }}</a>
+    {% endfor %}
+  </div>
+</div>
+
         <ul>
-            {% for poll in polls %}
+            {% for question in closed_questions %}
                 <li>
-                    <h2>{{ poll.poll_name }}</h2>
-                    <p>{{ poll.poll_text }}</p>
-                    {% for question in poll.openquestion_set.all %}
-                        <div>
-                            <p>{{ question.question_text }}</p>
-                            <textarea name="open_question_{{ question.id }}"></textarea>
-                        </div>
+                    <p>{{ question.question_text }}</p>
+                    {% for answer in question.closedanswers_set.all %}
+                        <label>
+                            <input type="radio" name="closed_question_{{ question.id }}" value="{{ answer.id }}">
+                            {{ answer.answer }}
+                        </label>
                     {% endfor %}
-                    {% for question in poll.closedquestions_set.all %}
-                        <div>
-                            <p>{{ question.question_text }}</p>
-                            {% for answer in question.closedanswers_set.all %}
-                                <label>
-                                    <input type="radio" name="closed_question_{{ question.id }}" value="{{ answer.id }}">
-                                    {{ answer.answer }}
-                                </label>
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
+                </li>
+            {% endfor %}
+            {% for question in open_questions %}
+                <li>
+                    <p>{{ question.question_text }}</p>
+                    <textarea class="form-control" name="open_question_{{ question.id }}"></textarea>
                 </li>
             {% endfor %}
         </ul>
         <input type="submit" value="Submit">
     </form>
+<script>
+    document.getElementById("poll_select").value = "{{ poll_id }}";
+</script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+    
+    
+    
 {% endblock %}

@@ -5,7 +5,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from project.encrypt_util import sec_hash
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse, FileResponse
 from django import forms
 from polls.models import PollRespondents, Polls, ClosedQuestions, OpenQuestions, ClosedAnswers, OpenAnswers, \
     UserPollStatus, TokenPolls
@@ -17,46 +17,44 @@ from django.contrib.auth.decorators import login_required
 from django.core import serializers
 import json
 import io
-from django.http import FileResponse
+
 
 
 
 @login_required
 def poll_response(request):
+   
+ 
+        
+    # Get the user's polls that they are a respondent of
     user_polls = PollRespondents.objects.filter(user_id=request.user)
     user_polls_pks = list(user_polls.values_list("poll_id", flat=True))
     polls = Polls.objects.filter(pk__in=user_polls_pks)
 
     if request.method == 'POST':
-        poll_id = 5
-        # poll_id = request.POST.get('poll_id')
-        poll = get_object_or_404(Polls, pk=poll_id)
-
-        open_questions = OpenQuestions.objects.filter(poll_id=poll)
-        closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
-        closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions)
-
-        answers = {}
-        for question in open_questions:
-            answers[question.id] = request.POST.get(str(question.id))
-
-        for question in closed_questions:
-            answers[question.id] = request.POST.getlist(str(question.id))
-
+        # Get the selected poll
+        poll_id = request.POST.get('poll_id')
+        selected_poll = get_object_or_404(Polls, pk=poll_id)
+        closed_questions = ClosedQuestions.objects.filter(poll_id=poll_id)
+        open_questions = OpenQuestions.objects.filter(poll_id=poll_id)
+        # Save the user's responses to the closed questions
+        # ...
+        # Save the user's responses to the open questions
+        # ...
+        # Redirect the user to a success page
+        return redirect('poll_response_success')
+    else:
+        poll_id = request.GET.get('poll_id')
+        request.session['poll_id'] = poll_id
         
-        json_data = json.dumps(answers)
-        # Connecting to Redis
-        cache.set(poll_id, json_data)
-
-        # Set the user's poll status as answered
-        UserPollStatus.objects.filter(poll_id=poll, user_id=request.user).update(answered=True)
-        context = {'json_data_hash': json_data, 'poll_id': poll_id}
-        return redirect('poll_response_success', context=context)
-
-
-    context = {'polls': polls}
-    return render(request, 'poll_response.html', context)
-
+        if not poll_id:
+            if polls:
+                poll_id = polls[0].id
+        current_poll = Polls.objects.get(pk=poll_id)
+        closed_questions = ClosedQuestions.objects.filter(poll_id=poll_id)
+        open_questions = OpenQuestions.objects.filter(poll_id=poll_id)    
+        # Render the template with the polls, closed questions, and open questions
+        return render(request, 'poll_response.html', {'polls': polls, 'closed_questions': closed_questions, 'open_questions': open_questions,'poll_id':poll_id,'current_poll':current_poll})
 
 @login_required
 def poll_response_download(request, poll_id):
