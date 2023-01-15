@@ -5,7 +5,10 @@
     <h1>Welcome, {{ user.first_name }} {{ user.last_name }}</h1>
     <p>Your email: {{ user.email }}</p>
     <p>Your hashed email: {{ hashed_email }}</p>
-    
+    <p> 
+      <a href="{% url 'poll_list' %}">Polls</a><br>
+      <a href="http://0.0.0.0:8000/polls/poll_response/">Wypełnij swoje ankiety</a><br>
+    </p>
     <h2>Change Password</h2>
     <form method="post" action="{% url 'change_password' %}">
       {% csrf_token %}

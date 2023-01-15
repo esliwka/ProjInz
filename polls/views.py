@@ -15,7 +15,7 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
-import json
+from django.db import transaction
 import io
 
 
@@ -165,10 +165,35 @@ def add_answer_to_closed(request, poll_id, question_id):
         form = ClosedQuestionAnswerForm(request.POST)
         if form.is_valid():
             question = get_object_or_404(ClosedQuestions, pk=question_id)
-            answer = ClosedAnswers(question_id=question, answer=form.cleaned_data['answer'], times_chosen=0)
+            order = ClosedAnswers.objects.filter(question_id=question).count() + 1
+            answer = ClosedAnswers(question_id=question, answer=form.cleaned_data['answer'], times_chosen=0, order=order)
             answer.save()
 
     return poll_edit(request, poll_id)
+
+@login_required
+def delete_poll(request, poll_id):
+    poll = get_object_or_404(Polls, pk=poll_id)
+    poll.delete()
+    return redirect('poll_list')
+
+@login_required
+def delete_closed_question(request, question_id):
+    question = get_object_or_404(ClosedQuestions, pk=question_id)
+    question.delete()
+    return redirect('poll_edit', poll_id=question.poll_id.id)
+
+@login_required
+def delete_open_question(request, question_id):
+    question = get_object_or_404(OpenQuestions, pk=question_id)
+    question.delete()
+    return redirect('poll_edit', poll_id=question.poll_id.id)
+
+@login_required
+def delete_answer(request, answer_id):
+    answer = get_object_or_404(ClosedAnswers, pk=answer_id)
+    answer.delete()
+    return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
 
 @login_required
 def poll_edit(request, poll_id):
@@ -198,27 +223,35 @@ def closed_question_delete_answer(request, answer_id):
     answer.delete()
     return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
 
+@transaction.atomic
+@login_required
 def move_answer_up(request, answer_id):
     answer = get_object_or_404(ClosedAnswers, pk=answer_id)
-    answer_above = ClosedAnswers.objects.filter(question_id=answer.question_id, pk__lt=answer_id).order_by('-pk').first()
-    if answer_above:
-        # switch the contents of the answers
-        answer.answer, answer_above.answer = answer_above.answer, answer.answer
+    answers = ClosedAnswers.objects.filter(question_id=answer.question_id)
+    current_index = answers.filter(pk=answer_id).first().order
+    if current_index == 1:
+        return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
+    else:
+        prev_answer = answers.filter(order=current_index - 1).first()
+        answer.order, prev_answer.order = prev_answer.order, answer.order
         answer.save()
-        answer_above.save()
+        prev_answer.save()
     return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
 
+@transaction.atomic
+@login_required
 def move_answer_down(request, answer_id):
     answer = get_object_or_404(ClosedAnswers, pk=answer_id)
-    answer_below = ClosedAnswers.objects.filter(question_id=answer.question_id, pk__gt=answer_id).order_by('pk').first()
-    if answer_below:
-        # switch the contents of the answers
-        answer.answer, answer_below.answer = answer_below.answer, answer.answer
+    answers = ClosedAnswers.objects.filter(question_id=answer.question_id)
+    current_index = answers.filter(pk=answer_id).first().order
+    if current_index == answers.count():
+        return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
+    else:
+        next_answer = answers.filter(order=current_index + 1).first()
+        answer.order, next_answer.order = next_answer.order, answer.order
         answer.save()
-        answer_below.save()
+        next_answer.save()
     return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
-    
-
 
 @login_required
 def add_respondent(request):

@@ -3,40 +3,29 @@
 {% block title %}Edit Poll{% endblock %}
 
 {% block content %}
-  <h1>{{ poll.poll_name }}</h1>
+<h1>{{ poll.poll_name }} <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
+  {% csrf_token %}
+  <input type="submit" value="Delete Poll" class="btn btn-danger btn-lg"></form></h1> 
+
+
   <p>{{ poll.poll_text }}</p>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-
-  <h2>Open Questions</h2>
-  <ol>
-  {% for open_question in open_questions %}
-    <li><p>{{ open_question.question_text }}</p></li>
-  {% empty %}
-    <p>No open questions for this poll.</p>
-  {% endfor %}
-  </ol>
-
-  <form method="post" action="{% url 'add_open_question' poll.id %}">
-    {% csrf_token %}
-    {{ open_question_form.as_p }}
-    <input type="submit" value="Add Open Question">
-  </form>
-
   <h2>Closed Questions</h2>
   <ol>
   {% for closed_question in closed_questions %}
-    <li><p>{{ closed_question.question_text }} 
-      
-      <ol>
+    <li><p>{{ closed_question.question_text }} <a href="{% url 'delete_closed_question' question_id=closed_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a></p>
+
+
+    <ol>
     {% for closed_answer in closed_answers %}
       {% if closed_answer.question_id_id == closed_question.id %}
-        <li>{{ closed_answer.answer }} 
+        <li>{{ closed_answer.answer }} <p></p>
           <!-- usun odpowiedz -->
-          <a href="{% url 'closed_question_delete_answer' closed_answer.id %}" class="text-red"><i class="fa-sharp fa-solid fa-xmark"></i></a>
+          <a href="{% url 'closed_question_delete_answer' closed_answer.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a>
 
           <!-- przesun odpowiedz w gore -->
           <a href="{% url 'move_answer_up' closed_answer.id %}" class="text-red"><i class="fas fa-arrow-up"></i></i></a>
-
+          
           <!-- przesun odpowiedz w dol -->
           <a href="{% url 'move_answer_down' closed_answer.id %}" class="text-red"><i class="fas fa-arrow-down"></i></i></a>
         </li>
@@ -58,7 +47,41 @@
     {{ closed_question_form.as_p }}
     <input type="submit" value="Add Closed Question">
   </form>
+  <h2>Open Questions</h2>
+  <ol>
+  {% for open_question in open_questions %}           
+
+    <p>{{ open_question.question_text }} <a href="{% url 'delete_closed_question' question_id=open_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a>
+        
+    </p><br>
+  {% empty %}
+    <p>No open questions for this poll.</p>
+  {% endfor %}
+  </ol>
+
+  <form method="post" action="{% url 'add_open_question' poll.id %}">
+    {% csrf_token %}
+    {{ open_question_form.as_p }}
+    <input type="submit" value="Add Open Question">
+  </form>
+
+
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script>document.addEventListener("DOMContentLoaded", function(){
+    if (performance.navigation.type === 0) {
+      // Store scroll position in local storage before page refresh
+      window.onbeforeunload = function () {
+          localStorage.setItem("scrollTop", window.pageYOffset);
+      };
+  
+      // Get scroll position from local storage and scroll to it after page has loaded
+      window.onload = function () {
+          var scroll = localStorage.getItem("scrollTop");
+          window.scrollTo(0, scroll);
+      };
+    }
+  });
+  </script>
 {% endblock %}

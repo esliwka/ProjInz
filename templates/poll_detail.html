@@ -3,14 +3,31 @@
 {% block title %}Poll Detail{% endblock %}
 
 {% block content %}
-  <h1>{{ poll.poll_name }}</h1>
-  <p>{{ poll.poll_text }}</p>
+<h1>{{ poll.poll_name }} <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
+  {% csrf_token %}
+  <input type="submit" value="Delete Poll" class="btn btn-danger btn-lg"></form></h1>
+  <p>Opis ankiety: {{ poll.poll_text }}</p>
   <h2>Respondents:</h2>
   <ul>
     {% for respondent in respondents %}
     <li><p>{{ respondent.email }}</p></li>
     {% endfor %}
   </ul>
+  <h2>Closed Questions</h2>
+  <ol>
+  {% for closed_question in closed_questions %}
+    <li><p>{{ closed_question.question_text }}</p></li>
+    <ul>
+    {% for closed_answer in closed_answers %}
+      {% if closed_answer.question_id_id == closed_question.id %}
+        <li>{{ closed_answer.answer }} | times chosen: {{ closed_answer.times_chosen }}</li>
+      {% endif %}
+    {% endfor %}
+    </ul>
+  {% empty %}
+    <p>No closed questions for this poll.</p>
+  {% endfor %}
+  </ol>
   <h2>Open Questions</h2>
   <ol>
   {% for open_question in open_questions %}
@@ -27,19 +44,5 @@
   {% endfor %}
   </ol>
 
-  <h2>Closed Questions</h2>
-  <ol>
-  {% for closed_question in closed_questions %}
-    <li><p>{{ closed_question.question_text }}</p></li>
-    <ul>
-    {% for closed_answer in closed_answers %}
-      {% if closed_answer.question_id_id == closed_question.id %}
-        <li>{{ closed_answer.answer }} | times chosen: {{ closed_answer.times_chosen }}</li>
-      {% endif %}
-    {% endfor %}
-    </ul>
-  {% empty %}
-    <p>No closed questions for this poll.</p>
-  {% endfor %}
-  </ol>
+  
 {% endblock %}

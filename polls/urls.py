@@ -22,7 +22,10 @@ urlpatterns = [
     path('delete_answer/<int:answer_id>/', views.closed_question_delete_answer, name='closed_question_delete_answer'),
     path('move_answer_up/<int:answer_id>/', views.move_answer_up, name='move_answer_up'),
     path('move_answer_down/<int:answer_id>/', views.move_answer_down, name='move_answer_down'),
-
+    path('polls/<int:poll_id>/delete/', views.delete_poll, name='delete_poll'),
+    path('open_questions/<int:question_id>/delete/', views.delete_open_question, name='delete_open_question'),
+    path('closed_questions/<int:question_id>/delete/', views.delete_closed_question, name='delete_closed_question'),
+    path('answers/<int:answer_id>/delete/', views.delete_answer, name='delete_answer'),
 
 
 ]

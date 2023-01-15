@@ -41,9 +41,13 @@ class ClosedAnswers(models.Model):
     question_id = models.ForeignKey('ClosedQuestions', on_delete=models.CASCADE)
     answer = models.TextField()
     times_chosen = models.IntegerField()
+    order = models.IntegerField(default=0)
     class Meta:
+        ordering = ['order']
         verbose_name = "ClosedAnswers"
         verbose_name_plural = "ClosedAnswers"
+    def __str__(self):
+        return self.answer
 
 class OpenAnswers(models.Model):
     question_id = models.ForeignKey('OpenQuestions', on_delete=models.CASCADE)
