@@ -5,16 +5,15 @@
     <form action="{% url 'poll_response' %}" method="post">
         {% csrf_token %}
         <div class="dropdown">
-  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    Zmień ankietę. Obecnie wybrana ankieta: <span class="current-poll-name">{{ current_poll.poll_name }}</span>
-  </button>
-  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-    {% for poll in polls %}
-        <a class="dropdown-item {% if poll.id == poll_id %}active{% endif %}" href="{% url 'poll_response' %}?poll_id={{ poll.id }}">{{ poll.poll_name }}</a>
-    {% endfor %}
-  </div>
-</div>
-
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Zmień ankietę. Obecnie wybrana ankieta: <span class="current-poll-name">{{ current_poll.poll_name }}</span>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                {% for poll in polls %}
+                    <a class="dropdown-item {% if poll.id == poll_id %}active{% endif %}" href="{% url 'poll_response' %}?poll_id={{ poll.id }}">{{ poll.poll_name }}</a>
+                {% endfor %}
+            </div>
+        </div>
         <ul>
             {% for question in closed_questions %}
                 <li>

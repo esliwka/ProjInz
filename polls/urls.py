@@ -19,6 +19,10 @@ urlpatterns = [
     path('poll_response/', views.poll_response, name='poll_response'),
     path('poll_response_success/', views.poll_response_success, name='poll_response_success'),
     path('poll_response_download/<int:poll_id>/', views.poll_response_download, name='poll_response_download'),
+    path('delete_answer/<int:answer_id>/', views.closed_question_delete_answer, name='closed_question_delete_answer'),
+    path('move_answer_up/<int:answer_id>/', views.move_answer_up, name='move_answer_up'),
+    path('move_answer_down/<int:answer_id>/', views.move_answer_down, name='move_answer_down'),
+
 
 
 ]

@@ -22,10 +22,7 @@ import io
 
 
 @login_required
-def poll_response(request):
-   
- 
-        
+def poll_response(request): 
     # Get the user's polls that they are a respondent of
     user_polls = PollRespondents.objects.filter(user_id=request.user)
     user_polls_pks = list(user_polls.values_list("poll_id", flat=True))
@@ -46,7 +43,6 @@ def poll_response(request):
     else:
         poll_id = request.GET.get('poll_id')
         request.session['poll_id'] = poll_id
-        
         if not poll_id:
             if polls:
                 poll_id = polls[0].id
@@ -65,8 +61,6 @@ def poll_response_download(request, poll_id):
     response['Content-Disposition'] = 'attachment; filename="hash.txt"'
     return response
 
-
-
 @login_required
 def poll_response_success(request, context):
     poll_id = context.get('poll_id')
@@ -76,9 +70,6 @@ def poll_response_success(request, context):
     response = FileResponse(file, content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename="hash.txt"'
     return render(request, 'poll_response_success.html', {'json_data_hash': hash_data })
-
-
-
 
 class PollForm(forms.Form):
     poll_name = forms.CharField(max_length=200)
@@ -92,7 +83,6 @@ class ClosedQuestionForm(forms.Form):
 
 class ClosedQuestionAnswerForm(forms.Form):
     answer = forms.CharField(max_length=200)
-
 
 class AddRespondentForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -201,6 +191,34 @@ def poll_edit(request, poll_id):
         'closed_question_answer_form': ClosedQuestionAnswerForm()
     }
     return render(request, 'poll_edit.html', context)
+
+@login_required
+def closed_question_delete_answer(request, answer_id):
+    answer = get_object_or_404(ClosedAnswers, pk=answer_id)
+    answer.delete()
+    return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
+
+def move_answer_up(request, answer_id):
+    answer = get_object_or_404(ClosedAnswers, pk=answer_id)
+    answer_above = ClosedAnswers.objects.filter(question_id=answer.question_id, pk__lt=answer_id).order_by('-pk').first()
+    if answer_above:
+        # switch the contents of the answers
+        answer.answer, answer_above.answer = answer_above.answer, answer.answer
+        answer.save()
+        answer_above.save()
+    return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
+
+def move_answer_down(request, answer_id):
+    answer = get_object_or_404(ClosedAnswers, pk=answer_id)
+    answer_below = ClosedAnswers.objects.filter(question_id=answer.question_id, pk__gt=answer_id).order_by('pk').first()
+    if answer_below:
+        # switch the contents of the answers
+        answer.answer, answer_below.answer = answer_below.answer, answer.answer
+        answer.save()
+        answer_below.save()
+    return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
+    
+
 
 @login_required
 def add_respondent(request):
