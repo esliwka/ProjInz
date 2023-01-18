@@ -12,6 +12,7 @@ class Polls(models.Model):
 class PollRespondents(models.Model):
     poll_id = models.ForeignKey('Polls', on_delete=models.CASCADE)
     user_id = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
+    answered = models.BooleanField(default=False)
     class Meta:
         verbose_name = "PollRespondents"
         verbose_name_plural = "PollRespondents"
@@ -59,7 +60,7 @@ class OpenAnswers(models.Model):
 class UserPollStatus(models.Model):
     user_id = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
     poll_id = models.ForeignKey('Polls', on_delete=models.CASCADE)
-    answered = models.BooleanField()
+    answered = models.BooleanField(default=False)
     class Meta:
         verbose_name = "UserPollStatus"
         verbose_name_plural = "UserPollStatus"

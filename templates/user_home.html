@@ -6,8 +6,24 @@
     <p>Your email: {{ user.email }}</p>
     <p>Your hashed email: {{ hashed_email }}</p>
     <p> 
-      <a href="{% url 'poll_list' %}">Polls</a><br>
-      <a href="http://0.0.0.0:8000/polls/poll_response/">Wypełnij swoje ankiety</a><br>
+      <a href="{% url 'poll_list' %}">Utworzone przez Ciebie ankiety</a><br>
+      <h3>Ankiety do wypełnienia:</h3>
+      <ul>
+        {% for poll in not_answered_polls %}
+        <li>
+          {{ poll.poll_name }} - {{ poll.poll_text}}
+        </li>
+        {% endfor %}
+      </ul>
+      <p><a href="http://0.0.0.0:8000/polls/poll_response/">Wypełnij swoje ankiety!</a></p>
+      <h3>Wypełnione ankiety:</h3>
+      <ul>
+        {% for poll in answered_polls %}
+        <li>
+          {{ poll.poll_name }} - {{ poll.poll_text}}
+        </li>
+        {% endfor %}
+      </ul>
     </p>
     <h2>Change Password</h2>
     <form method="post" action="{% url 'change_password' %}">

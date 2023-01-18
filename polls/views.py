@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django import forms
 from polls.models import PollRespondents, Polls, ClosedQuestions, OpenQuestions, ClosedAnswers, OpenAnswers, \
-    UserPollStatus, TokenPolls
+    TokenPolls
 from django.contrib.auth.models import User
 from users.models import CustomUser
 from django.http import HttpResponseNotAllowed
@@ -16,13 +16,14 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.db import transaction
+from django.db.models import Q
 import io
 
 
 
 
 @login_required
-def poll_response(request): 
+def poll_response(request):
     # Get the user's polls that they are a respondent of
     user_polls = PollRespondents.objects.filter(user_id=request.user)
     user_polls_pks = list(user_polls.values_list("poll_id", flat=True))
@@ -279,10 +280,19 @@ def redis_test(request):
 def user_home(request):
     form = PasswordChangeForm(request.user)
     hashed_email = sec_hash(request.user.email)
+    is_users = Q(user_id=request.user)
+    is_answered = Q(answered=True)
+    is_not_answered = Q(answered=False)
+    answered_polls_ids = PollRespondents.objects.filter(is_users & is_answered).values_list("poll_id")
+    not_answered_polls_ids = PollRespondents.objects.filter(is_users & is_not_answered).values_list("poll_id")
+    answered_polls = Polls.objects.filter(id__in=answered_polls_ids)
+    not_answered_polls = Polls.objects.filter(id__in=not_answered_polls_ids)
     context = {
         'user': request.user,
         'hashed_email': hashed_email,
-        'form': form
+        'form': form,
+        'answered_polls': answered_polls,
+        'not_answered_polls': not_answered_polls
     }
     return render(request, 'user_home.html', context)
 
