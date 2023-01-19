@@ -7,12 +7,16 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    {% load static %}
+   
 
-    <title>{% block title %}Voting Page{% endblock %}</title>
+    <title>{% block title %}Anonimowe Ankiety{% endblock %}</title>
   </head>
-  <body>
+  {% load static %}
+  <body style="background: linear-gradient(to right, white, #9df8e1);">
+
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Voting Page</a>
+        <a class="navbar-brand" href="#">| Anonimowe Ankiety |</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -20,41 +24,42 @@
           <ul class="navbar-nav">
             <li class="nav-item active">
                 {% if user.is_authenticated %}
-                <a class="nav-link" href="/polls/user_home/">Home</a>
+                <a class="nav-link" href="/polls/user_home/">Panel użytkownika</a>
                 {% else %}
-                <a class="nav-link" href="{% url 'index' %}">Home</a>
+                <a class="nav-link" href="{% url 'index' %}">Strona Główna</a>
                 {% endif %}
             </li>
               {% if user.is_authenticated %}
                 <li class="nav-item">
-                  <a class="nav-link" href="/polls/poll-list">Poll list</a>
+                  <a class="nav-link" href="/polls/poll-list">Lista stworzonych ankiet</a>
                 </li>
-                {% if user.is_superuser %}
-                <li class="nav-item">
-                  <a class="nav-link" href="/admin">Admin panel</a>
-                </li>
-                {% endif %}
+
                 {% if user.is_staff %}
                 <li class="nav-item">
-                  <a class="nav-link" href="/polls/create_poll">Create poll</a>
+                  <a class="nav-link" href="/polls/create_poll">Stwórz ankietę</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="/polls/add-respondent">Add poll respondent</a>
+                  <a class="nav-link" href="/polls/add-respondent">Wyślij ankiety użytkownikom</a>
                 </li>
                 {% endif %}
               {% endif %}
             <li class="nav-item">
-              <a class="nav-link" href="#">About</a>
+              <a class="nav-link" href="#">O Nas</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Contact</a>
+              <a class="nav-link" href="#">Kontakt</a>
             </li>
+            {% if user.is_superuser %}
+            <li class="nav-item">
+              <a class="nav-link" href="/admin">Panel Admina</a>
+            </li>
+            {% endif %}
           </ul>
         </div>
         {% if user.is_authenticated %}
         <form action="{% url 'logout' %}" method="post" class="form-inline my-2 my-lg-0">
           {% csrf_token %}
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Logout</button>
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Wyloguj Się</button>
         </form>
         {% endif %}
       </nav>
@@ -68,5 +73,4 @@
   
     {% block scripts %}
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.16.0/dist/umd/popper.min.js" integrity="sha384-yCp6GvaxhUoO6UaE8ZQY6Uv+j9egxO7Vz8QOJAx7qb5f5w5wO05M8hGpDVl9H9Pp" crossorigin="anonymous"></script
     {% endblock %}

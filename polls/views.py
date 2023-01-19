@@ -18,6 +18,7 @@ from django.core import serializers
 from django.db import transaction
 from django.db.models import Q
 import io
+from polls.forms import PolishPasswordChangeForm
 
 
 
@@ -190,11 +191,11 @@ def delete_open_question(request, question_id):
     question.delete()
     return redirect('poll_edit', poll_id=question.poll_id.id)
 
-@login_required
-def delete_answer(request, answer_id):
-    answer = get_object_or_404(ClosedAnswers, pk=answer_id)
-    answer.delete()
-    return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
+# @login_required
+# def delete_answer(request, answer_id):
+#     answer = get_object_or_404(ClosedAnswers, pk=answer_id)
+#     answer.delete()
+#     return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
 
 @login_required
 def poll_edit(request, poll_id):
@@ -218,11 +219,21 @@ def poll_edit(request, poll_id):
     }
     return render(request, 'poll_edit.html', context)
 
+@transaction.atomic
 @login_required
 def closed_question_delete_answer(request, answer_id):
     answer = get_object_or_404(ClosedAnswers, pk=answer_id)
+    closed_question = ClosedQuestions.objects.filter(poll_id=answer.question_id.poll_id.id)
     answer.delete()
+    remaining_answers = ClosedAnswers.objects.filter(question_id=answer.question_id).order_by('order')
+    if len(remaining_answers)>0:
+        for i in range(0,len(remaining_answers)):
+            if remaining_answers[i].order != i+1:
+                remaining_answers[i].order=i+1
+                remaining_answers[i].save()
     return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
+
+
 
 @transaction.atomic
 @login_required
@@ -285,6 +296,8 @@ def user_home(request):
     is_not_answered = Q(answered=False)
     answered_polls_ids = PollRespondents.objects.filter(is_users & is_answered).values_list("poll_id")
     not_answered_polls_ids = PollRespondents.objects.filter(is_users & is_not_answered).values_list("poll_id")
+    user_poll_ids = Polls.objects.filter(poll_owner_id_id=request.user).values_list("id")
+    user_polls = Polls.objects.filter(id__in=user_poll_ids)
     answered_polls = Polls.objects.filter(id__in=answered_polls_ids)
     not_answered_polls = Polls.objects.filter(id__in=not_answered_polls_ids)
     context = {
@@ -292,9 +305,27 @@ def user_home(request):
         'hashed_email': hashed_email,
         'form': form,
         'answered_polls': answered_polls,
-        'not_answered_polls': not_answered_polls
+        'not_answered_polls': not_answered_polls,
+        'user_polls': user_polls,
     }
     return render(request, 'user_home.html', context)
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PolishPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Hasło zostało zmienione!')
+            return redirect('user_home')
+        else:
+            messages.error(request, 'Proszę poprawić błędy poniżej.')
+            return redirect('change_password')
+    else:
+        form = PolishPasswordChangeForm(request.user)
+        args = {'form': form}
+        return render(request, 'change_password.html', args)
 
 
 def index(request):
@@ -302,6 +333,16 @@ def index(request):
         return redirect('user_home')
     return render(request, 'index.html')
 
+@login_required
+def update_poll_name(request, poll_id, new_name):
+    poll = get_object_or_404(Polls, pk=poll_id)
+    if request.method == 'POST':
+        # new_name = request.POST.get('new_name')
+        poll.poll_name = new_name
+        poll.save()
+        return redirect('poll_edit', poll_id=poll.id)
+    else:
+        return render(request, 'poll_edit.html', {'poll': poll})
 
 def login_view(request):
     if request.method == 'POST':
@@ -314,7 +355,7 @@ def login_view(request):
             login(request, user)
             return redirect('user_home')
         else:
-            return render(request, 'login.html', {'error': 'Invalid login credentials'})
+            return render(request, 'login.html', {'error': 'Złe dane logowania'})
     return render(request, 'login.html')
 
 
@@ -322,20 +363,3 @@ def logout_view(request):
     logout(request)
     return redirect('index')
 
-
-@login_required
-def change_password(request):
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)  # Important!
-            messages.success(request, 'Your password was successfully updated!')
-            return redirect('change_password')
-        else:
-            messages.error(request, 'Please correct the error below.')
-    else:
-        form = PasswordChangeForm(request.user)
-    return render(request, 'polls/change_password.html', {
-        'form': form
-    })

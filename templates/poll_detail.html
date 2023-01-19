@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Poll Detail{% endblock %}
+{% block title %}{{ poll.poll_name }} - Poll Detail{% endblock %}
 
 {% block content %}
 <h1>{{ poll.poll_name }} <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">

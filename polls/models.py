@@ -7,7 +7,7 @@ class Polls(models.Model):
     poll_is_finished = models.BooleanField(default=False)
     class Meta:
         verbose_name = "Polls"
-        verbose_name_plural = "Polls"    
+        verbose_name_plural = "Polls"
 
 class PollRespondents(models.Model):
     poll_id = models.ForeignKey('Polls', on_delete=models.CASCADE)

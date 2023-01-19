@@ -3,7 +3,12 @@
 {% block title %}Edit Poll{% endblock %}
 
 {% block content %}
-<h1>{{ poll.poll_name }} <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
+<h1>{{ poll.poll_name }} <button id="edit-name-btn">Edit Name</button>
+  <form id="edit-name-form" style="display: none;">
+      <input type="text" id="new-name" name="new_name">
+      <button id="save-name-btn" type="submit">Save</button>
+  </form>
+   <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
   {% csrf_token %}
   <input type="submit" value="Delete Poll" class="btn btn-danger btn-lg"></form></h1> 
 
@@ -51,7 +56,7 @@
   <ol>
   {% for open_question in open_questions %}           
 
-    <p>{{ open_question.question_text }} <a href="{% url 'delete_closed_question' question_id=open_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a>
+    <p>{{ open_question.question_text }} <a href="{% url 'delete_open_question' question_id=open_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a>
         
     </p><br>
   {% empty %}
@@ -83,5 +88,53 @@
       };
     }
   });
+  $("#edit-name-btn").click(function() {
+    $("#edit-name-form").show();
+  });
+
+  // $("#save-name-btn").click(function(e) {
+  //     e.preventDefault();
+  //     var newName = $("#new-name").val();
+  //     $.ajax({
+  //         url: '/polls/update_poll_name/',
+  //         type: 'POST',
+  //         data: {'new_name': newName, 'poll_id': '{{ poll.id }}'},
+  //         success: function(response) {
+  //             if (response.success) {
+  //                 // update the name on the page
+  //                 $("#poll-name").text(newName);
+  //                 $("#edit-name-form").hide();
+  //                 alert("Name updated successfully!");
+  //             } else {
+  //                 alert("Error updating name. Please try again.");
+  //             }
+  //         }
+  //     });
+  // });
+
+//   document.getElementById('edit-name-button').addEventListener('click', function() {
+//   document.getElementById('edit-name-form').style.display = 'block';
+// });
+
+document.getElementById('save-name-button').addEventListener('click', function() {
+  var newName = document.getElementById('new-name').value;
+  var pollId = '{{ poll.id }}'; // assuming you have the poll object available in the template context
+  fetch('update_poll_name/' + pollId + '/', {
+    method: 'POST',
+    body: JSON.stringify({poll_id: "{{ poll.id }}", new_name: newName}),
+    headers: {
+      'Content-Type': 'application/json',
+      "X-CSRFToken": "{{ csrf_token }}"  }
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Success:', data);
+    $("#edit-name-form").hide();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+});
+
   </script>
 {% endblock %}
