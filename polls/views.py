@@ -20,8 +20,22 @@ from django.db.models import Q
 import io
 from polls.forms import PolishPasswordChangeForm
 
+class PollForm(forms.Form):
+    poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
+    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False, label='Opis ankiety')
 
+class OpenQuestionForm(forms.Form):
+    question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Pytanie otwarte')
 
+class ClosedQuestionForm(forms.Form):
+    question = forms.CharField(max_length=200, required=True, label='Pytanie zamknięte')
+
+class ClosedQuestionAnswerForm(forms.Form):
+    answer = forms.CharField(max_length=200 , required=True, label='Odpowiedź')
+
+class AddRespondentForm(forms.Form):
+    users = forms.ModelChoiceField(queryset=CustomUser.objects.all(), label='Użytkownik', empty_label=None)
+    polls = forms.ModelChoiceField(queryset=Polls.objects.all(), label='Ankieta', empty_label=None, to_field_name='poll_name' )
 
 @login_required
 def poll_response(request):
@@ -72,29 +86,6 @@ def poll_response_success(request, context):
     response = FileResponse(file, content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename="hash.txt"'
     return render(request, 'poll_response_success.html', {'json_data_hash': hash_data })
-
-class PollForm(forms.Form):
-    poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
-    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False, label='Opis ankiety')
-
-class OpenQuestionForm(forms.Form):
-    question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Pytanie otwarte')
-
-class ClosedQuestionForm(forms.Form):
-    question = forms.CharField(max_length=200, required=True, label='Pytanie zamknięte')
-
-class ClosedQuestionAnswerForm(forms.Form):
-    answer = forms.CharField(max_length=200 , required=True, label='Odpowiedź')
-
-class AddRespondentForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user')
-        super(AddRespondentForm, self).__init__(*args, **kwargs)
-        polls_list = list([(poll.id, poll.poll_name) for poll in Polls.objects.filter(poll_owner_id=user)])
-        self.fields['polls'] = forms.ChoiceField(choices=polls_list, label='Ankieta')
-    users_choices = CustomUser.objects.all()
-    users_list = [(user.id, user.email) for user in users_choices]
-    users = forms.ChoiceField(choices=users_list, label='Użytkownik')
 
 
 @login_required
@@ -268,16 +259,22 @@ def move_answer_down(request, answer_id):
 @login_required
 def add_respondent(request):
     if request.method == 'POST':
-        form = AddRespondentForm(request.POST, user=request.user.id)
+        first_user = CustomUser.objects.first()
+        first_poll = Polls.objects.first()
+        form = AddRespondentForm(request.POST, initial={'users': first_user, 'polls': first_poll} if first_user and first_poll else None)
+
         if form.is_valid():
-            poll = Polls.objects.get(id=form.cleaned_data['polls'])
-            user = CustomUser.objects.get(id=form.cleaned_data['users'])
+            poll = Polls.objects.get(id=form.cleaned_data['polls'].pk)
+            user = CustomUser.objects.get(id=form.cleaned_data['users'].pk)
             poll_respondent = PollRespondents(poll_id=poll, user_id=user)
             poll_respondent.save()
             return redirect('poll_list')
     else:
-        form = AddRespondentForm(user=request.user)
+        form = AddRespondentForm()
+        form.fields['polls'].queryset = Polls.objects.filter(poll_owner_id=request.user.id)
+
     return render(request, 'add_respondent.html', {'form': form})
+
 
 
 def redis_test(request):

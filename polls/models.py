@@ -8,6 +8,8 @@ class Polls(models.Model):
     class Meta:
         verbose_name = "Polls"
         verbose_name_plural = "Polls"
+    def str(self):
+        return self.poll_name
 
 class PollRespondents(models.Model):
     poll_id = models.ForeignKey('Polls', on_delete=models.CASCADE)
