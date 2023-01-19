@@ -25,7 +25,7 @@
     <ol>
     {% for closed_answer in closed_answers %}
       {% if closed_answer.question_id_id == closed_question.id %}
-        <li>{{ closed_answer.answer }} <p></p>
+        <li>{{ closed_answer.answer }} 
           <!-- usun odpowiedz -->
           <a href="{% url 'closed_question_delete_answer' closed_answer.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a>
 
@@ -51,15 +51,16 @@
   <form method="post" action="{% url 'add_closed_question' poll.id %}">
     {% csrf_token %}
     {{ closed_question_form.as_p }}
-    <input type="submit" value="Add Closed Question">
+    <input type="submit" value="Dodaj pytanie zamknięte">
   </form>
+  <br><br>
   <h2>Pytania otwarte</h2>
   <ol>
   {% for open_question in open_questions %}           
 
     <p>{{ open_question.question_text }} <a href="{% url 'delete_open_question' question_id=open_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a>
         
-    </p><br>
+    </p>
   {% empty %}
     <p>Brak pytań otwartych dla tej ankiety.</p>
   {% endfor %}
@@ -70,6 +71,7 @@
     {{ open_question_form.as_p }}
     <input type="submit" value="Dodaj pytanie otwarte">
   </form>
+  <br><br><br><br><br>
 
 
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>

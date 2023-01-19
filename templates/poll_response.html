@@ -33,7 +33,7 @@
             {% for question in open_questions %}
                 <li>
                     <p>{{ question.question_text }}</p>
-                    <textarea class="form-control" name="open_question_{{ question.id }}"></textarea>
+                    <textarea class="form-control" style="width: 50%;" name="open_question_{{ question.id }}"></textarea>
                 </li>
             {% endfor %}
         </ul>

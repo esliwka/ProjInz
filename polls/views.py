@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django import forms
 from polls.models import PollRespondents, Polls, ClosedQuestions, OpenQuestions, ClosedAnswers, OpenAnswers, \
-    TokenPolls
+    TokenPolls, UserPollStatus
 from django.contrib.auth.models import User
 from users.models import CustomUser
 from django.http import HttpResponseNotAllowed
@@ -19,10 +19,14 @@ from django.db import transaction
 from django.db.models import Q
 import io
 from polls.forms import PolishPasswordChangeForm
+<<<<<<< Updated upstream
 
 class PollForm(forms.Form):
     poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
     poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False, label='Opis ankiety')
+=======
+import json
+>>>>>>> Stashed changes
 
 class OpenQuestionForm(forms.Form):
     question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Pytanie otwarte')
@@ -45,18 +49,47 @@ def poll_response(request):
     polls = Polls.objects.filter(pk__in=user_polls_pks)
 
     if request.method == 'POST':
-        # Get the selected poll
         poll_id = request.POST.get('poll_id')
         selected_poll = get_object_or_404(Polls, pk=poll_id)
         closed_questions = ClosedQuestions.objects.filter(poll_id=poll_id)
         open_questions = OpenQuestions.objects.filter(poll_id=poll_id)
-        # Save the user's responses to the closed questions
-        # ...
-        # Save the user's responses to the open questions
-        # ...
-        # Redirect the user to a success page
-        return redirect('poll_response_success')
-    else:
+    #     poll_data = {}
+    #     for question in closed_questions:
+    #         selected_answer = request.POST.get(f'closed_question_{question.id}')
+    #         if selected_answer:
+    #             answer = ClosedAnswers.objects.get(pk=selected_answer)
+    #             answer.times_chosen += 1
+    #             answer.save()
+    #             poll_data[f'{poll_id}'] = {'{question.id}': question.question_text, 'answer': selected_answer.answer}
+               
+    #     for question in open_questions:
+    #         answer = request.POST.get(f'open_question_{question.id}')
+    #         if answer:
+    #             OpenAnswers.objects.create(question_id=question, answer=answer)
+    #             poll_data[f'{poll_id}_{question.id}'] = {'question': question.question_text, 'answer': answer}
+    #     if poll_data:
+    #         user_email = request.user.email
+    #         token = TokenPolls.objects.create(token_id=user_email, answers=poll_data)
+    #         UserPollStatus.objects.filter(user_id=request.user, poll_id=poll_id).update(answered=True)
+    #         return redirect('poll_response_success')
+    #     else:
+    #         messages.error(request, 'Please select at least one closed question and answer one open question.')
+
+
+    #     for question in open_questions:
+    #         answer = request.POST.get(f'open_question_{question.id}')
+    #         if answer:
+    #             OpenAnswers.objects.create(question_id=question, answer=answer)
+    #             poll_data[question.question_text] = answer
+
+    #     json_data = json.dumps(poll_data)
+    #     token = request.user.email
+        
+    #     TokenPolls.objects.create(token_id=token, answers=json_data)
+    #     UserPollStatus.objects.filter(user_id=request.user, poll_id=poll_id).update(answered=True)
+    #     return redirect('poll_response_success')
+    # else:
+    if request.method == 'GET':
         poll_id = request.GET.get('poll_id')
         request.session['poll_id'] = poll_id
         if not poll_id:
@@ -67,6 +100,7 @@ def poll_response(request):
         open_questions = OpenQuestions.objects.filter(poll_id=poll_id)    
         # Render the template with the polls, closed questions, and open questions
         return render(request, 'poll_response.html', {'polls': polls, 'closed_questions': closed_questions, 'open_questions': open_questions,'poll_id':poll_id,'current_poll':current_poll})
+
 
 @login_required
 def poll_response_download(request, poll_id):
@@ -87,6 +121,45 @@ def poll_response_success(request, context):
     response['Content-Disposition'] = 'attachment; filename="hash.txt"'
     return render(request, 'poll_response_success.html', {'json_data_hash': hash_data })
 
+<<<<<<< Updated upstream
+=======
+class PollForm(forms.Form):
+    poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
+    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}), required=False, label='Opis ankiety')
+
+class OpenQuestionForm(forms.Form):
+    question = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}), required=True, label='Pytanie otwarte')
+
+class ClosedQuestionForm(forms.Form):
+    question = forms.CharField(max_length=200, required=True, label='Pytanie zamknięte')
+
+class ClosedQuestionAnswerForm(forms.Form):
+    answer = forms.CharField(max_length=200 , required=True, label='Odpowiedź')
+
+class AddRespondentForm(forms.Form):
+    users = forms.ModelChoiceField(queryset=CustomUser.objects.all(), label='Użytkownik', empty_label=None)
+    polls = forms.ModelChoiceField(queryset=Polls.objects.all(), label='Ankieta', empty_label=None ,to_field_name='poll_name' )
+
+@login_required
+def add_respondent(request):
+    if request.method == 'POST':
+        first_user = CustomUser.objects.first()
+        first_poll = Polls.objects.first()
+        form = AddRespondentForm(request.POST, initial={'users': first_user, 'polls': first_poll} if first_user and first_poll else None)
+
+        if form.is_valid():
+            poll = Polls.objects.get(id=form.cleaned_data['polls'].pk)
+            user = CustomUser.objects.get(id=form.cleaned_data['users'].pk)
+            poll_respondent = PollRespondents(poll_id=poll, user_id=user)
+            poll_respondent.save()
+            return redirect('poll_list')
+    else:
+        form = AddRespondentForm()
+        form.fields['polls'].queryset = Polls.objects.filter(poll_owner_id=request.user.id)
+
+    return render(request, 'add_respondent.html', {'form': form})
+
+>>>>>>> Stashed changes
 
 @login_required
 def poll_list(request):
@@ -256,6 +329,7 @@ def move_answer_down(request, answer_id):
         next_answer.save()
     return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
 
+<<<<<<< Updated upstream
 @login_required
 def add_respondent(request):
     if request.method == 'POST':
@@ -275,6 +349,8 @@ def add_respondent(request):
 
     return render(request, 'add_respondent.html', {'form': form})
 
+=======
+>>>>>>> Stashed changes
 
 
 def redis_test(request):
@@ -286,7 +362,7 @@ def redis_test(request):
 
 @login_required
 def user_home(request):
-    form = PasswordChangeForm(request.user)
+    # form = PasswordChangeForm(request.user)
     hashed_email = sec_hash(request.user.email)
     is_users = Q(user_id=request.user)
     is_answered = Q(answered=True)
@@ -300,7 +376,7 @@ def user_home(request):
     context = {
         'user': request.user,
         'hashed_email': hashed_email,
-        'form': form,
+        # 'form': form,
         'answered_polls': answered_polls,
         'not_answered_polls': not_answered_polls,
         'user_polls': user_polls,

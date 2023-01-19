@@ -1,34 +1,34 @@
 {% extends "base.html" %}
 
-{% block title %}{{ poll.poll_name }} - Poll Detail{% endblock %}
+{% block title %}{{ poll.poll_name }} - szczegóły ankiety {% endblock %}
 
 {% block content %}
 <h1>{{ poll.poll_name }} <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
   {% csrf_token %}
-  <input type="submit" value="Delete Poll" class="btn btn-danger btn-lg"></form></h1>
+  <input type="submit" value="Usuń Ankietę" class="btn btn-danger btn-lg"></form></h1>
   <p>Opis ankiety: {{ poll.poll_text }}</p>
-  <h2>Respondents:</h2>
+  <h2>Przypisani użytkownicy:</h2>
   <ul>
     {% for respondent in respondents %}
     <li><p>{{ respondent.email }}</p></li>
     {% endfor %}
   </ul>
-  <h2>Closed Questions</h2>
+  <h2>Pytania zamknięte</h2>
   <ol>
   {% for closed_question in closed_questions %}
     <li><p>{{ closed_question.question_text }}</p></li>
     <ul>
     {% for closed_answer in closed_answers %}
       {% if closed_answer.question_id_id == closed_question.id %}
-        <li>{{ closed_answer.answer }} | times chosen: {{ closed_answer.times_chosen }}</li>
+        <li>{{ closed_answer.answer }} | wybrano: {{ closed_answer.times_chosen }}</li>
       {% endif %}
     {% endfor %}
     </ul>
   {% empty %}
-    <p>No closed questions for this poll.</p>
+    <p>Brak pytań zamkniętych w tej ankiecie.</p>
   {% endfor %}
   </ol>
-  <h2>Open Questions</h2>
+  <h2>Pytania otwarte</h2>
   <ol>
   {% for open_question in open_questions %}
     <li><p>{{ open_question.question_text }}</p></li>
@@ -40,7 +40,7 @@
     {% endfor %}
     </ul>
   {% empty %}
-    <p>No open questions for this poll.</p>
+    <p>Brak pytań otwartych w tej ankiecie.</p>
   {% endfor %}
   </ol>
 

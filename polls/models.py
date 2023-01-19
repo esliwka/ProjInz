@@ -8,7 +8,11 @@ class Polls(models.Model):
     class Meta:
         verbose_name = "Polls"
         verbose_name_plural = "Polls"
+<<<<<<< Updated upstream
     def str(self):
+=======
+    def __str__(self):
+>>>>>>> Stashed changes
         return self.poll_name
 
 class PollRespondents(models.Model):

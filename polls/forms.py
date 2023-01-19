@@ -4,9 +4,9 @@ from django.contrib import messages
 
 
 class PolishPasswordChangeForm(PasswordChangeForm):
-    old_password = forms.CharField(label="Stare hasło", widget=forms.PasswordInput)
-    new_password1 = forms.CharField(label="Nowe hasło", widget=forms.PasswordInput)
-    new_password2 = forms.CharField(label="Powtórz nowe hasło", widget=forms.PasswordInput)
+    old_password = forms.CharField(label="Stare hasło", widget=forms.PasswordInput(attrs={'style': 'width: 40%'}))
+    new_password1 = forms.CharField(label="Nowe hasło", widget=forms.PasswordInput(attrs={'style': 'width: 40%'}))
+    new_password2 = forms.CharField(label="Powtórz nowe hasło", widget=forms.PasswordInput(attrs={'style': 'width: 40%'}))
 
     error_messages = {
         'password_incorrect': "Stare hasło jest niepoprawne.",
