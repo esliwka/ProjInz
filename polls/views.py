@@ -19,14 +19,7 @@ from django.db import transaction
 from django.db.models import Q
 import io
 from polls.forms import PolishPasswordChangeForm
-<<<<<<< Updated upstream
-
-class PollForm(forms.Form):
-    poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
-    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False, label='Opis ankiety')
-=======
 import json
->>>>>>> Stashed changes
 
 class OpenQuestionForm(forms.Form):
     question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Pytanie otwarte')
@@ -121,8 +114,6 @@ def poll_response_success(request, context):
     response['Content-Disposition'] = 'attachment; filename="hash.txt"'
     return render(request, 'poll_response_success.html', {'json_data_hash': hash_data })
 
-<<<<<<< Updated upstream
-=======
 class PollForm(forms.Form):
     poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
     poll_text = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}), required=False, label='Opis ankiety')
@@ -159,7 +150,6 @@ def add_respondent(request):
 
     return render(request, 'add_respondent.html', {'form': form})
 
->>>>>>> Stashed changes
 
 @login_required
 def poll_list(request):
@@ -329,28 +319,6 @@ def move_answer_down(request, answer_id):
         next_answer.save()
     return redirect('poll_edit', poll_id=answer.question_id.poll_id.id)
 
-<<<<<<< Updated upstream
-@login_required
-def add_respondent(request):
-    if request.method == 'POST':
-        first_user = CustomUser.objects.first()
-        first_poll = Polls.objects.first()
-        form = AddRespondentForm(request.POST, initial={'users': first_user, 'polls': first_poll} if first_user and first_poll else None)
-
-        if form.is_valid():
-            poll = Polls.objects.get(id=form.cleaned_data['polls'].pk)
-            user = CustomUser.objects.get(id=form.cleaned_data['users'].pk)
-            poll_respondent = PollRespondents(poll_id=poll, user_id=user)
-            poll_respondent.save()
-            return redirect('poll_list')
-    else:
-        form = AddRespondentForm()
-        form.fields['polls'].queryset = Polls.objects.filter(poll_owner_id=request.user.id)
-
-    return render(request, 'add_respondent.html', {'form': form})
-
-=======
->>>>>>> Stashed changes
 
 
 def redis_test(request):
