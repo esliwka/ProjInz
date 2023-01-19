@@ -74,27 +74,27 @@ def poll_response_success(request, context):
     return render(request, 'poll_response_success.html', {'json_data_hash': hash_data })
 
 class PollForm(forms.Form):
-    poll_name = forms.CharField(max_length=200)
-    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False)
+    poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
+    poll_text = forms.CharField(max_length=1000, widget=forms.Textarea, required=False, label='Opis ankiety')
 
 class OpenQuestionForm(forms.Form):
-    question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True)
+    question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Pytanie otwarte')
 
 class ClosedQuestionForm(forms.Form):
-    question = forms.CharField(max_length=200)
+    question = forms.CharField(max_length=200, required=True, label='Pytanie zamknięte')
 
 class ClosedQuestionAnswerForm(forms.Form):
-    answer = forms.CharField(max_length=200)
+    answer = forms.CharField(max_length=200 , required=True, label='Odpowiedź')
 
 class AddRespondentForm(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user')
         super(AddRespondentForm, self).__init__(*args, **kwargs)
         polls_list = list([(poll.id, poll.poll_name) for poll in Polls.objects.filter(poll_owner_id=user)])
-        self.fields['polls'] = forms.ChoiceField(choices=polls_list)
+        self.fields['polls'] = forms.ChoiceField(choices=polls_list, label='Ankieta')
     users_choices = CustomUser.objects.all()
     users_list = [(user.id, user.email) for user in users_choices]
-    users = forms.ChoiceField(choices=users_list)
+    users = forms.ChoiceField(choices=users_list, label='Użytkownik')
 
 
 @login_required

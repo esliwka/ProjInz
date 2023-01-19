@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-
+{% block title %}Wyślij ankietę - Anonimowe Ankiety{% endblock %}
 {% block content %}
-  <h1>Add respondent to poll</h1>
+  <h1>Wyślij ankietę użytkownikowi do wypełnienia</h1>
   <form method="post" action="{% url 'add_respondent' %}">
     {% csrf_token %}
     {{ form.as_p }}
-    <input type="submit" value="Add repondent">
+    <input type="submit" value="Wyślij">
   </form>
 {% endblock %}

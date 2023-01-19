@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% block title %}Tworzenie nowej ankiety - Anonimowe Ankiety{% endblock %}
 
 {% block content %}
-  <h1>Create Poll</h1>
+  <h1>Stwórz ankietę</h1>
   <form method="post" action="{% url 'create_poll' %}">
     {% csrf_token %}
     {{ form.as_p }}
-    <input type="submit" value="Create Poll">
+    <input type="submit" value="Utwórz">
   </form>
 {% endblock %}

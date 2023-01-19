@@ -16,7 +16,14 @@
   <body style="background: linear-gradient(to right, white, #9df8e1);">
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">| Anonimowe Ankiety |</a>
+
+      {% if user.is_authenticated %}
+      <a class="navbar-brand" href="/polls/user_home/">| Anonimowe Ankiety |</a>
+      {% else %}
+      <a class="navbar-brand" href="{% url 'index' %}">| Anonimowe Ankiety |</a>
+      {% endif %}
+
+        
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -33,7 +40,7 @@
                 <li class="nav-item">
                   <a class="nav-link" href="/polls/poll-list">Lista stworzonych ankiet</a>
                 </li>
-
+                
                 {% if user.is_staff %}
                 <li class="nav-item">
                   <a class="nav-link" href="/polls/create_poll">Stwórz ankietę</a>

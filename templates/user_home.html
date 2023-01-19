@@ -5,8 +5,12 @@
 
   <div class="container">
     <h1>Witaj, {{ user.first_name }} {{ user.last_name }}</h1>
-    <p>Twój email: {{ user.email }}</p>
-    <p>{{ hashed_email }}</p>
+    <p>Twój email: {{ user.email }}    
+      <form method="get" action="{% url 'change_password' %}">
+        <input type="submit" value="Zmień hasło" class="btn btn-primary">
+    </form>
+    </p>
+    <!-- <p>{{ hashed_email }}</p> -->
     <p> 
       <h3><a href="{% url 'poll_list' %}">Utworzone przez Ciebie ankiety:</a><br></h3>
       <ul>
@@ -55,11 +59,12 @@
         <li>
           {{ poll.poll_name }} - {{ poll.poll_text}}
         </li>
+        {% empty %}
+        <ul><li><p>Nie wypełniłeś jeszcze żadnych ankiet.</p></li></ul>
+        
         {% endfor %}
       </ul>
     </p>
-    <p>
-      <a href="{% url 'change_password' %}">Zmień hasło</a>
-    </p>
+
   </div>
 {% endblock %}

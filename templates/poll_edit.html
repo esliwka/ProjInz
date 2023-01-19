@@ -1,21 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Poll{% endblock %}
+{% block title %}Edytor ankiety: {{ poll.poll_name }}{% endblock %}
 
 {% block content %}
-<h1>{{ poll.poll_name }} <button id="edit-name-btn">Edit Name</button>
+<h1>{{ poll.poll_name }} 
+  <!-- <button id="edit-name-btn">Edit Name</button>
   <form id="edit-name-form" style="display: none;">
       <input type="text" id="new-name" name="new_name">
       <button id="save-name-btn" type="submit">Save</button>
-  </form>
+  </form> -->
    <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
   {% csrf_token %}
-  <input type="submit" value="Delete Poll" class="btn btn-danger btn-lg"></form></h1> 
+  <input type="submit" value="Usuń ankietę" class="btn btn-danger btn-lg"></form></h1> 
 
 
   <p>{{ poll.poll_text }}</p>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-  <h2>Closed Questions</h2>
+  <h2>Pytania zamknięte</h2>
   <ol>
   {% for closed_question in closed_questions %}
     <li><p>{{ closed_question.question_text }} <a href="{% url 'delete_closed_question' question_id=closed_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a></p>
@@ -40,10 +41,10 @@
     <form method="post" action="{% url 'add_answer_to_closed' poll.id closed_question.id %}">
       {% csrf_token %}
       {{ closed_question_answer_form.as_p }}
-      <input type="submit" value="Add Answer">
+      <input type="submit" value="Dodaj odpowiedź">
     </form>
   {% empty %}
-    <p>No closed questions for this poll.</p>
+    <p>Brak pytań zamkniętych dla tej ankiety.</p>
   {% endfor %}
   </ol>
 
@@ -52,7 +53,7 @@
     {{ closed_question_form.as_p }}
     <input type="submit" value="Add Closed Question">
   </form>
-  <h2>Open Questions</h2>
+  <h2>Pytania otwarte</h2>
   <ol>
   {% for open_question in open_questions %}           
 
@@ -60,14 +61,14 @@
         
     </p><br>
   {% empty %}
-    <p>No open questions for this poll.</p>
+    <p>Brak pytań otwartych dla tej ankiety.</p>
   {% endfor %}
   </ol>
 
   <form method="post" action="{% url 'add_open_question' poll.id %}">
     {% csrf_token %}
     {{ open_question_form.as_p }}
-    <input type="submit" value="Add Open Question">
+    <input type="submit" value="Dodaj pytanie otwarte">
   </form>
 
 
