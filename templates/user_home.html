@@ -13,41 +13,49 @@
     <!-- <p>{{ hashed_email }}</p> -->
     <p> 
       {% if user.is_staff %}
-      <h3><a href="{% url 'poll_list' %}">Utworzone przez Ciebie ankiety:</a><br></h3>
+      <h3>Utworzone przez Ciebie ankiety:<br></h3>
       <ul>
         {% for poll in user_polls %}
-        <li>
+        
            <table>
             <tr>
               <td class="col-2">
                 {{ poll.poll_name }} - {{ poll.poll_text}}
               </td>
               <td class="col-1">
-                <a href="{% url 'poll_edit' poll.id %}">Edytuj Ankietę </a>
-              </td>
-              <td class="col-1">
                 <a href="{% url 'poll_detail' poll.id %}">Zobacz odpowiedzi</a>
               </td>
+              {% if not poll.poll_is_published %}
+                <td class="col-1">
+                    <a href="{% url 'poll_edit' poll.id %}">Edytuj Ankietę </a>
+                </td>
+                {% else %}
+                <td class="col-1">
+                    <p>Edytuj Ankietę</p> 
+                </td>
+                {% endif %}
+                
+           
             </tr>
           </table>
           
 
-        </li>
+        
         {% endfor %}
       </ul>
       {% endif %}
 
 
-      <h3><a href="http://0.0.0.0:8000/polls/poll_response/">Ankiety do wypełnienia:</a></h3>
+      <h3>Ankiety do wypełnienia:</h3>
       <ul>
         {% for poll in not_answered_polls %}
-        <li>
+        
           <table>
             <tr>
-              <td class="col-1">
+              <td class="col-2">
                 {{ poll.poll_name }} - {{ poll.poll_text}}
               </td>
-              <td class="col-1">
+              <td class="col-2">
                 <a href="{% url 'poll_response' %}?poll_id={{ poll.id }}">Wypełnij teraz!</a>
               </td>
             </tr>
@@ -63,7 +71,7 @@
           {{ poll.poll_name }} - {{ poll.poll_text}}
         </li>
         {% empty %}
-        <ul><li><p>Nie wypełniłeś jeszcze żadnych ankiet.</p></li></ul>
+        <ul><p>Nie wypełniłeś jeszcze żadnych ankiet.</p></ul>
         
         {% endfor %}
       </ul>

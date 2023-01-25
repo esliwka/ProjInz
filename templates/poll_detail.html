@@ -3,9 +3,19 @@
 {% block title %}{{ poll.poll_name }} - szczegóły ankiety {% endblock %}
 
 {% block content %}
-<h1>{{ poll.poll_name }} <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
-  {% csrf_token %}
-  <input type="submit" value="Usuń Ankietę" class="btn btn-danger btn-lg"></form></h1>
+<h1>{{ poll.poll_name }} 
+  <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
+    {% csrf_token %}
+    <input type="submit" value="Usuń Ankietę" class="btn btn-danger btn-lg">
+  </form>
+  {% if poll.poll_is_published %}
+  <form method="get" action="{% url 'unpublish_poll' poll.id %}">
+    <input type="submit" value="Odpublikuj Ankietę" class="btn btn-primary">
+  </form>
+  {% endif %}
+
+  <a href="{% url 'user_home' %}" class="btn btn-secondary">Powrót</a>
+</h1>
   <p>Opis ankiety: {{ poll.poll_text }}</p>
   <h2>Przypisani użytkownicy:</h2>
   <ul>
@@ -13,6 +23,24 @@
     <li><p>{{ respondent.email }}</p></li>
     {% endfor %}
   </ul>
+  {% if not poll.poll_is_published %}
+  <h2>Dodaj respondentów</h2>
+  <form method="post" action="{% url 'button_add_respondent' poll_id=poll.id %}">
+    {% csrf_token %}
+    <select name="user_id">
+      {% for user in users %}
+          {% if not user in respondents %}
+              <option value="{{ user.id }}">{{ user.email }}</option>
+          {% endif %}
+      {% endfor %}
+  </select>
+  
+
+
+    <input type="submit" value="Dodaj respondentów" class="btn btn-primary">
+</form>
+
+  {% endif %}
   <h2>Pytania zamknięte</h2>
   <ol>
   {% for closed_question in closed_questions %}

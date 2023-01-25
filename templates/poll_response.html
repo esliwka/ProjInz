@@ -18,6 +18,7 @@
                 {% endfor %}
             </div>
         </div>
+        <input type="hidden" name="poll_id" value="{{ current_poll.id }}">
         <ul>
             {% for question in closed_questions %}
                 <li>

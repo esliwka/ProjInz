@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Rejestracja - Anonimowe Ankiety{% endblock %}
+{% block content %}
+    <h1>Rejestracja</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% for field in form %}
+            {% for error in field.errors %}
+                <p style="color:red">{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+        <input type="submit" value="Zarejestruj się">
+    </form>
+    
+{% endblock %}
+
+
+

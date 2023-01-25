@@ -1,10 +1,14 @@
 from django.db import models
+from django.utils import timezone
+import datetime
 
 class Polls(models.Model):
     poll_owner_id = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
     poll_name = models.CharField(max_length=255)
     poll_text = models.TextField()
     poll_is_finished = models.BooleanField(default=False)
+    poll_end_time = models.DateTimeField(default=timezone.now() + datetime.timedelta(days=7))
+    poll_is_published = models.BooleanField(default=False)
     class Meta:
         verbose_name = "Polls"
         verbose_name_plural = "Polls"

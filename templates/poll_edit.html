@@ -12,8 +12,16 @@
    <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
   {% csrf_token %}
   <input type="submit" value="Usuń ankietę" class="btn btn-danger btn-lg"></form></h1> 
-
-
+  {% if poll.poll_is_published %}
+  <button class="btn btn-success btn-lg" disabled>Ankieta opublikowana</button>
+{% else %}
+  <form method="post" action="{% url 'publish_poll' poll_id=poll.id %}">
+    {% csrf_token %}
+    <input type="submit" class="btn btn-success" value="Opublikuj ankietę">
+  </form>
+{% endif %}
+<br>
+<a href="{% url 'user_home' %}" class="btn btn-secondary">Powrót</a>
   <p>{{ poll.poll_text }}</p>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
   <h2>Pytania zamknięte</h2>

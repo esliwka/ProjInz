@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h1>Poll response successful</h1>
-    <p>Your response has been recorded, thank you for your participation.</p>
-    <p>Your response hash: <strong>{{ json_data_hash }}</strong></p>
-    <a href="{% url 'poll_response_download' context.poll_id %}" download>Download file</a>
+    <h1>Odpowiedź do ankiety została udzielona</h1>
+    <p>Twoja odpowiedź została zapisana, dziękujemy za udział.</p>
+    <p>Zapisz lub pobierz token, który umożliwi sprawdzenie, czy twoja odpowiedź jest bezpieczna:<br>
+         <strong>{{ json_data_hash }}</strong></p>
+    <a href="{% url 'poll_response_download' poll_id %}">Pobierz token!</a>
+    <br><br><br>
+    <a href="{% url 'user_home' %}">Powrót do panelu użytkownika</a>
 
 {% endblock %}
