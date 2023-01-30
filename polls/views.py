@@ -75,36 +75,37 @@ def poll_results(request):
                         break
         database_hash = sec_hash(user_email + sec_hash(str(token_id)+str(poll_id)+str(token.answers))) 
 
-
+        
+        
         if database_hash == user_token_hash:
-            for key, value in json.loads(token.answers).items():
+            if Polls.objects.filter(pk=token_poll_id):
+                poll = Polls.objects.get(pk=token_poll_id)
+                if not poll.poll_is_finished:
+                    return render(request, 'user_verify_integrity.html', {'error': 'Ankieta nie została jeszcze zamknięta.'})
+                else:
+                    additional = json.loads(token.answers)
+                    for key, value in json.loads(token.answers).items():
                         token_poll_id, question_type, question_id = key.split('_')
-                        if Polls.objects.filter(pk=token_poll_id):
-                            poll = Polls.objects.get(pk=token_poll_id)
-                            if not poll.poll_is_finished:
-                                return render(request, 'user_verify_integrity.html', {'error': 'Ankieta nie została jeszcze zamknięta.'})
-                            else:
-                                if question_type == 'open':
-                                    open_question = OpenQuestions.objects.get(pk=question_id)
-                                    open_answers.append(f'Pytanie: {open_question.question_text}\n Odpowiedź: {value["answer"]} \n')
-                                    
-                                elif question_type == 'closed':
-                                    closed_question = ClosedQuestions.objects.get(pk=question_id)
-                                    closed_answers.append(f'Pytanie: {closed_question.question_text}\n Odpowiedź: {value["answer"]} \n')
-                                    
-                                else:
-                                    return render(request, 'user_verify_integrity.html', {'error': 'Błąd: Nieprawidłowy typ pytania. Skontaktuj się z administratorem.'})
                                 
-                                user_message = 'Weryfikacja danych przebiegła pomyślnie. \n Dane w bazie danych są zgodne z danymi przesłanymi przez użytkownika.'
-                                user_fail_message = 'Weryfikacja danych nie powiodła się. \n Dane w bazie danych nie są zgodne z danymi przesłanymi przez użytkownika.'
-                                return render(request, 'poll_results.html', {'open_answers':open_answers, 'closed_answers':closed_answers, 'poll_name': poll.poll_name, 'user_message': user_message})
+                        if question_type == 'open':
+                            open_answers.append(f'Pytanie: {value["question"]},\n Odpowiedź: {value["answer"]}')
+                        elif question_type == 'closed':
+                            closed_answers.append(f'Pytanie: {value["question"]},\n Odpowiedź: {value["answer"]}')
+
+                         
                         else:
-                            messages.error(request, f"Twoje dane zostały naruszone w bazie danych. Administrator został powiadomiony.\n")
-                            return render(request, 'user_verify_integrity.html', {'error': 'Token validation failed. Please try again.!!!'})
+                            return render(request, 'user_verify_integrity.html', {'error': 'Błąd: Nieprawidłowy typ pytania. Skontaktuj się z administratorem.'})
+                        
+                        user_message = 'Weryfikacja danych przebiegła pomyślnie. \n Dane w bazie danych są zgodne z danymi przesłanymi przez użytkownika.'
+                        user_fail_message = 'Weryfikacja danych nie powiodła się. \n Dane w bazie danych nie są zgodne z danymi przesłanymi przez użytkownika.'
+                        return render(request, 'poll_results.html', {'additional':additional, 'open_answers':open_answers, 'closed_answers':closed_answers, 'poll_name': poll.poll_name, 'user_message': user_message})
+            else:
+                messages.error(request, f"Twoje dane zostały naruszone w bazie danych. Administrator został powiadomiony.\n")
+                return render(request, 'user_verify_integrity.html', {'error': 'Brak takiej ankiety w bazie, została zmieniona lub usunięta. Administrator został powiadomiony.'})
         else:
             return render(request, 'user_verify_integrity.html', {'error': 'Weryfikacja danych nie powiodła się. \n Dane w bazie danych nie są zgodne z danymi przesłanymi przez użytkownika. Administrator został powiadomiony.'})
     else:
-        return render(request, 'user_verify_integrity.html', {'error': 'Token validation failed. Please try again.'})
+        return render(request, 'user_verify_integrity.html', {'error': 'Nieprawidłowy token. Upewnij się, że wprowadzono poprawny token.'})
 
 @login_required
 def poll_response(request):
@@ -112,6 +113,10 @@ def poll_response(request):
     user_polls = PollRespondents.objects.filter(user_id=request.user)
     user_polls_pks = list(user_polls.values_list("poll_id", flat=True))
     polls = Polls.objects.filter(pk__in=user_polls_pks)
+    # sprawdzenie czy ankietę można już wypełnić i usuniecie z listy ankiet, których nie można wypelnic
+    for poll in polls:
+        if poll.poll_is_finished:
+            polls = polls.exclude(pk=poll.pk)
 
     if request.method == 'POST':
         poll_id = request.POST.get('poll_id')
@@ -162,15 +167,16 @@ def poll_response(request):
             users_pks = list(users.values_list("id", flat=True))
             test_variables.append(f'users_pks = {users_pks}')
             user_poll_status = PollRespondents.objects.filter(user_id__in=users_pks, poll_id=poll_id)
-            for id in users_pks:
-                test_variables.append( f'{id} = {PollRespondents.objects.filter(user_id__in= users_pks , poll_id=poll_id).values_list("answered", flat=True)}'             
-                     )
+            # for id in users_pks:
+            #     test_variables.append( f'{id} = {PollRespondents.objects.filter(user_id__in= users_pks , poll_id=poll_id).values_list("answered", flat=True)}'             
+            #          )
             user_poll_status_pks = list(user_poll_status.values_list("answered", flat=True))
             test_variables.append(f'user_poll_status_pks = {user_poll_status_pks}')
             
             #user_poll_status_pks contains strings of numbers and users_pks contains True/False how to compare them? if False dont count it and if True count it
-
-            if len(user_poll_status_pks) == len([i for i in users_pks if i == True]):
+            test_variables.append(f'len(user_poll_status_pks) = {len([x for x in users_pks if x])}')
+            test_variables.append(f'len([i for i in users_pks if i == True]) = {len([x for x in user_poll_status_pks if x])}')
+            if len([x for x in user_poll_status_pks if x]) == len([x for x in users_pks if x]):
                 Polls.objects.filter(pk=poll_id).update(poll_is_finished=True)
                 
                 test_variables.append(f'{poll_id} = poll_is_finished')
@@ -206,23 +212,28 @@ def poll_response(request):
                 for item in token_list:
                     # hashes_list.append([item, cache.get(item)[0]])
                     # if TokenPolls.objects.get(token_id=item).answers_hash == cache.get(item)[0]:
-                        x = cache.get(item)
-                        y = TokenPolls.objects.get(token_id=item).answers_hash
+                        x = cache.get(item, None)
+                        y = TokenPolls.objects.get(token_id=item).answers
+                        y = sec_hash(str(item) + str(poll_id) + str(y))
                         if x[0] != y:
-                            hashes_list.append([TokenPolls.objects.get(token_id=item).answers , 'Weryfikacja ankiety niepoprawna. Odpowiedzi użytkowników nie zgadzają się z odpowiedziami zapisanymi w bazie danych. Zastępuje błędne odpowiedzi poprawnymi odpowiedziami.'])
+                            hashes_list.append(TokenPolls.objects.get(token_id=item).answers)
                             if x:
                                 TokenPolls.objects.filter(token_id=item).update(answers_hash=x[0], answers=x[1])
+                            
                                 #then delete the TokenPolls object from database
                         # cache.delete(item)
                         
                 TokenPolls.objects.filter(token_id__in = token_list ).update(poll_ended=True)
                 if hashes_list:
-                    Polls.objects.filter(pk=poll_id).update(poll_conclusion=hashes_list)
+                    Polls.objects.filter(pk=poll_id).update(poll_conclusion=f"'Weryfikacja ankiety niepoprawna. \n Odpowiedzi użytkowników nie zgadzają się z odpowiedziami zapisanymi w bazie danych. \n Zmienione odpowiedzi to: {hashes_list}")
                 else:
                     Polls.objects.filter(pk=poll_id).update(poll_conclusion="Ankieta została zakończona. Wszystkie odpowiedzi zostały poprawnie zweryfikowane.")
                     
-            return render(request, 'poll_response_success.html', {'poll_id': poll_id, 'json_data_hash': user_token+user_data_hash,
-             'token_id': user_token, 'token_list': token_list})
+                return render(request, 'poll_response_success.html', {'poll_id': poll_id, 'json_data_hash': user_token+user_data_hash,
+                'token_id': user_token }) #, 'token_list': token_list})
+            else:
+                return render(request, 'poll_response_success.html', {'poll_id': poll_id, 'json_data_hash': user_token+user_data_hash,
+                'token_id': user_token})
 
     # if request.method == 'POST':
     #     poll_id = request.POST.get('poll_id')

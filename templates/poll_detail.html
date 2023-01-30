@@ -14,7 +14,11 @@
   <h2>Ankieta została zakończona</h2>
   {% if poll.poll_conclusion %}
   <br>
+  {% if poll.poll_conclusion|length > 82%}
+    <p><b>Wnioski: <span style="color:rgb(116, 9, 9)">{{ poll.poll_conclusion }}</span></b></p>
+  {% else %}
     <p><b>Wnioski: <span style="color:rgb(9, 116, 32)">{{ poll.poll_conclusion }}</span></b></p>
+  {% endif %}
   <br>
   {% endif %}
   

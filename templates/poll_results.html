@@ -12,22 +12,22 @@
     <div class="error">{{ error }}</div>
     {% endif %}
     
-    {% if closed_answers %}
-    <h4>Pytania zamknięte:</h4>
-    {% for answer in closed_answers %}
-    <div class="answer">
-        <p>{{ answer|linebreaks }}</p>
-    </div>
-    {% endfor %}
-    {% endif %}
-    {% if open_answers %}
-    <h4>Pytania otwarte:</h4>
-    {% for answer in open_answers %}
-    <div class="answer">
-        <p>{{ answer|linebreaks }}</p>
-    </div>
-    {% endfor %}
-    {% endif %}
 
+
+{% if additional %}
+<h3>Twoje odpowiedzi:</h3><br>
+<ul>
+    {% for key, value in additional.items %} 
+    {% for key2, value2 in value.items %} 
+    {% if key2 == 'question' %}
+    <li>Pytanie: {{value2}}</li>
+    {% else %}
+    Odpowiedź: {{value2}}<br>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+
+</ul>
+{% endif %}
 {% endblock %}
     
