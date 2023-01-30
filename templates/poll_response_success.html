@@ -7,5 +7,15 @@
     <a href="{% url 'poll_response_download' poll_id %}">Pobierz token!</a>
     <br><br><br>
     <a href="{% url 'user_home' %}">Powrót do panelu użytkownika</a>
+    
+    {% if token_list %}
+    <h2>Lista tokenów</h2>
+    <ul>
+    
+        <li>{{ token_list }}</li>
+    
+    </ul>
+    {% endif %}
+
 
 {% endblock %}

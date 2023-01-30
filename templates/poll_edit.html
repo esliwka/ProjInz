@@ -3,28 +3,60 @@
 {% block title %}Edytor ankiety: {{ poll.poll_name }}{% endblock %}
 
 {% block content %}
-<h1>{{ poll.poll_name }} 
-  <!-- <button id="edit-name-btn">Edit Name</button>
-  <form id="edit-name-form" style="display: none;">
-      <input type="text" id="new-name" name="new_name">
-      <button id="save-name-btn" type="submit">Save</button>
-  </form> -->
-   <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
-  {% csrf_token %}
-  <input type="submit" value="Usuń ankietę" class="btn btn-danger btn-lg"></form></h1> 
-  {% if poll.poll_is_published %}
-  <button class="btn btn-success btn-lg" disabled>Ankieta opublikowana</button>
-{% else %}
-  <form method="post" action="{% url 'publish_poll' poll_id=poll.id %}">
+<h1>{{ poll.poll_name }}</h1>
+
+<div class="row">
+  <div class="span2">
+    <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
+      {% csrf_token %}
+      <input type="submit" value="Usuń ankietę" class="btn btn-danger btn-lg ml-3"></form>
+  </div>
+  <div class="span2">
+    {% if poll.poll_is_published %}
+      <button class="btn btn-success btn-lg ml-3" disabled>Ankieta opublikowana</button>
+    {% else %}
+      <form method="post" action="{% url 'publish_poll' poll_id=poll.id %}">
+        {% csrf_token %}
+        <input type="submit" class="btn btn-success ml-3" value="Opublikuj ankietę">
+      </form>
+    {% endif %}
+  </div>
+  <div class="span2">
+    <a href="{% url 'user_home' %}" class="btn btn-secondary ml-3">Powrót</a>
+  </div>
+</div>
+
+
+<br><br>
+  <p>Opis ankiety: {{ poll.poll_text }}</p>
+  <br>
+  <h3>Przypisani użytkownicy:</h3>
+  <ul>
+    {% for respondent in respondents %}
+    <li><p>{{ respondent.email }}</p></li>
+    {% endfor %}
+  </ul>
+  
+  {% if not poll.poll_is_published and not poll.poll_is_finished %}
+  <h3>Dodaj respondentów</h3>
+  <form method="post" action="{% url 'button_add_respondent_edit' poll_id=poll.id %}">
     {% csrf_token %}
-    <input type="submit" class="btn btn-success" value="Opublikuj ankietę">
-  </form>
-{% endif %}
-<br>
-<a href="{% url 'user_home' %}" class="btn btn-secondary">Powrót</a>
-  <p>{{ poll.poll_text }}</p>
+    <select name="user_id">
+      {% for user in users %}
+          {% if not user in respondents %}
+              <option value="{{ user.id }}">{{user.first_name}} {{user.last_name}} - {{ user.email }}</option>
+          {% endif %}
+      {% endfor %}
+  </select>
+  
+
+
+    <input type="submit" value="Dodaj respondentów" class="btn btn-primary">
+</form>
+
+  {% endif %}
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-  <h2>Pytania zamknięte</h2>
+  <h3>Pytania zamknięte</h3>
   <ol>
   {% for closed_question in closed_questions %}
     <li><p>{{ closed_question.question_text }} <a href="{% url 'delete_closed_question' question_id=closed_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a></p>
@@ -55,14 +87,14 @@
     <p>Brak pytań zamkniętych dla tej ankiety.</p>
   {% endfor %}
   </ol>
-
+<br>
   <form method="post" action="{% url 'add_closed_question' poll.id %}">
     {% csrf_token %}
     {{ closed_question_form.as_p }}
     <input type="submit" value="Dodaj pytanie zamknięte">
   </form>
   <br><br>
-  <h2>Pytania otwarte</h2>
+  <h3>Pytania otwarte</h3>
   <ol>
   {% for open_question in open_questions %}           
 
@@ -73,7 +105,7 @@
     <p>Brak pytań otwartych dla tej ankiety.</p>
   {% endfor %}
   </ol>
-
+  <br>
   <form method="post" action="{% url 'add_open_question' poll.id %}">
     {% csrf_token %}
     {{ open_question_form.as_p }}

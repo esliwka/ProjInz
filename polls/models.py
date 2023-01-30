@@ -9,6 +9,7 @@ class Polls(models.Model):
     poll_is_finished = models.BooleanField(default=False)
     poll_end_time = models.DateTimeField(default=timezone.now() + datetime.timedelta(days=7))
     poll_is_published = models.BooleanField(default=False)
+    poll_conclusion = models.TextField(default=None, null=True)
     class Meta:
         verbose_name = "Polls"
         verbose_name_plural = "Polls"
@@ -41,6 +42,8 @@ class OpenQuestions(models.Model):
 class TokenPolls(models.Model):
     token_id = models.CharField(max_length=255)
     answers = models.TextField()
+    answers_hash = models.CharField(max_length=255)
+    poll_ended = models.BooleanField(default=False)
     class Meta:
         verbose_name = "TokenPolls"
         verbose_name_plural = "TokenPolls"

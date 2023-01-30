@@ -2,21 +2,22 @@
 {% block title %}Tworzenie nowej ankiety - Anonimowe Ankiety{% endblock %}
 
 {% block content %}
+  
   <h1>Stwórz ankietę</h1>
   <form method="post" action="{% url 'create_poll' %}">
     {% csrf_token %}
     {{ form.as_p }}
     <div class="form-group">
       <label for="poll_end_time">Data zakończenia ankiety</label>
+      <div class="row">
       <div class="input-group date" id="datetimepicker1" data-target-input="nearest">
-          <input type="text" class="form-control datetimepicker-input" id="poll_end_time" name="poll_end_time" required data-target="#datetimepicker1"/>
+          <input type="text" class="form-control datetimepicker-input col-2" id="poll_end_time" name="poll_end_time" required data-target="#datetimepicker1"/>
           <div class="input-group date" id="datetimepicker1" data-target-input="nearest">
             {{ form.date }}
-            <div class="input-group-append" data-target="#datetimepicker1" data-toggle="datetimepicker">
-              <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+            <div class="input-group-append " data-target="#datetimepicker1" data-toggle="datetimepicker">
+              <div class="input-group-text "><i class="fa fa-calendar"></i></div>
             </div>
           </div>
-          
           <script>
             $(function () {
               $("#datetimepicker1").datetimepicker({
@@ -26,11 +27,18 @@
           </script>
       </div>
     </div>
-
+    </div>
     <input type="submit" class="btn btn-primary" value="Utwórz">
 </form>
+  
+
+
     <meta charset="utf-8">
-    
+    {% if messages %}
+    {% for message in messages %}
+    {% ifchanged %}<div class="alert alert-danger">{{ message }}</div> {% endifchanged %}
+    {% endfor %}
+    {% endif %}
  
 
     <!-- Bootstrap 4 -->

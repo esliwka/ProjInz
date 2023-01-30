@@ -1,0 +1,26 @@
+
+{% extends 'base.html' %}
+{% block title %}Weryfikacja integralności odpowiedzi - Anonimowe Ankiety{% endblock %}
+{% block content %}
+    
+    {% if error %}
+    <h1 class="error">{{ error|linebreaks }}</h1>
+    <a href="{% url 'user_home' %}" class="btn btn-secondary ml-3">Powrót</a>
+    {% else %}
+    <h1>Weryfikacja poprawności danych</h1>
+    <p>Podaj token, który otrzymałeś po wypełnieniu ankiety</p>
+    <form method="post" action="{% url 'poll_results' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            
+            <input type="text" class="form-control" id="user_token" name="user_token" placeholder="Wpisz token">
+        </div>
+        <button type="submit" class="btn btn-primary">Weryfikuj</button>
+    </form>
+    {% endif %}
+    
+    
+
+{% endblock %}
+
+

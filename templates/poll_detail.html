@@ -3,34 +3,64 @@
 {% block title %}{{ poll.poll_name }} - szczegóły ankiety {% endblock %}
 
 {% block content %}
-<h1>{{ poll.poll_name }} 
+
+{% if poll.poll_is_published %}
+  <h3>{{ poll.poll_name }} - szczegóły ankiety</h3>
+{% else %}
+  <h3>{{ poll.poll_name }} - szczegóły ankiety (nieopublikowana)</h3>
+{% endif %}
+
+{% if poll.poll_is_finished %}
+  <h2>Ankieta została zakończona</h2>
+  {% if poll.poll_conclusion %}
+  <br>
+    <p><b>Wnioski: <span style="color:rgb(9, 116, 32)">{{ poll.poll_conclusion }}</span></b></p>
+  <br>
+  {% endif %}
+  
+{% endif %}
+
+<div class="row">
+  <div class="span2">
   <form method="post" action="{% url 'delete_poll' poll_id=poll.id %}">
     {% csrf_token %}
     <input type="submit" value="Usuń Ankietę" class="btn btn-danger btn-lg">
   </form>
-  {% if poll.poll_is_published %}
-  <form method="get" action="{% url 'unpublish_poll' poll.id %}">
-    <input type="submit" value="Odpublikuj Ankietę" class="btn btn-primary">
-  </form>
-  {% endif %}
 
-  <a href="{% url 'user_home' %}" class="btn btn-secondary">Powrót</a>
-</h1>
-  <p>Opis ankiety: {{ poll.poll_text }}</p>
-  <h2>Przypisani użytkownicy:</h2>
+  </div>
+  
+    {% if poll.poll_is_published %}
+    <div class="span2">
+      <form method="get" action="{% url 'unpublish_poll' poll.id %}">
+        <input type="submit" value="Ukryj ankietę i wróć do edycji" class="btn btn-primary ml-3">
+      </form>
+    </div>
+  {% endif %}
+  
+  <div class="span2">
+    <a href="{% url 'user_home' %}" class="btn btn-secondary ml-3">Powrót</a>
+  </div>
+</div>
+<br><br>
+  
+  <p><b>Opis ankiety:</b> {{ poll.poll_text }}</p>
+  <h3>Przypisani użytkownicy:</h3>
   <ul>
     {% for respondent in respondents %}
+
+
     <li><p>{{ respondent.email }}</p></li>
     {% endfor %}
   </ul>
-  {% if not poll.poll_is_published %}
-  <h2>Dodaj respondentów</h2>
+  
+  {% if not poll.poll_is_published and not poll.poll_is_finished %}
+  <h3>Dodaj respondentów</h3>
   <form method="post" action="{% url 'button_add_respondent' poll_id=poll.id %}">
     {% csrf_token %}
     <select name="user_id">
       {% for user in users %}
           {% if not user in respondents %}
-              <option value="{{ user.id }}">{{ user.email }}</option>
+              <option value="{{ user.id }}">{{user.first_name}} {{user.last_name}} - {{ user.email }}</option>
           {% endif %}
       {% endfor %}
   </select>
@@ -41,22 +71,58 @@
 </form>
 
   {% endif %}
-  <h2>Pytania zamknięte</h2>
+ 
+  
+  {% load static %}
+  <h3>Pytania zamknięte</h3>
   <ol>
-  {% for closed_question in closed_questions %}
+    {% for closed_question in closed_questions %}
     <li><p>{{ closed_question.question_text }}</p></li>
+    
+    <div id="chart-container-{{ closed_question.id }}"></div>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Odpowiedzi', 'Liczba wyborów'],
+          {% for closed_answer in closed_answers %}
+            {% if closed_answer.question_id_id == closed_question.id %}
+              ['{{ closed_answer.answer }}', {{ closed_answer.times_chosen }}],
+            {% endif %}
+          {% endfor %}
+        ]);
+
+        var options = {
+          title: 'Wyniki dla pytania: {{ closed_question.question_text }}',
+          backgroundColor: 'transparent',
+          is3D: true,
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('chart-container-{{ closed_question.id }}'));
+        chart.draw(data, options);
+      }
+    </script>
+
     <ul>
-    {% for closed_answer in closed_answers %}
-      {% if closed_answer.question_id_id == closed_question.id %}
-        <li>{{ closed_answer.answer }} | wybrano: {{ closed_answer.times_chosen }}</li>
-      {% endif %}
-    {% endfor %}
+      {% for closed_answer in closed_answers %}
+        {% if closed_answer.question_id_id == closed_question.id %}
+          <li>{{ closed_answer.answer }} | wybrano: {{ closed_answer.times_chosen }}</li>
+        {% endif %}
+        
+      {% endfor %}
     </ul>
+
+
+    <br><br>
   {% empty %}
     <p>Brak pytań zamkniętych w tej ankiecie.</p>
   {% endfor %}
   </ol>
-  <h2>Pytania otwarte</h2>
+  <h3>Pytania otwarte</h3>
   <ol>
   {% for open_question in open_questions %}
     <li><p>{{ open_question.question_text }}</p></li>
@@ -67,10 +133,14 @@
       {% endif %}
     {% endfor %}
     </ul>
+  <br>
+  <a href="{% url 'open_question_responses_download' open_question.id %}" class="btn btn-primary">Pobierz odpowiedzi</a>
+  
   {% empty %}
     <p>Brak pytań otwartych w tej ankiecie.</p>
   {% endfor %}
   </ol>
+<br><br><br></br>
 
-  
+
 {% endblock %}

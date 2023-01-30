@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Wyniki ankiety - Anonimowe Ankiety{% endblock %}
+{% block content %}
+    <h1>Wyniki ankiety</h1>
+    <h3>Nazwa ankiety: {{poll_name}}</h3>
+    <div class="span2">
+        <a href="{% url 'user_home' %}" class="btn btn-secondary ml-3">Powrót</a>
+      </div>
+      <br>
+    <h4 style="color:rgb(3, 131, 3)">{{ user_message|linebreaks }}</h4><br>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    
+    {% if closed_answers %}
+    <h4>Pytania zamknięte:</h4>
+    {% for answer in closed_answers %}
+    <div class="answer">
+        <p>{{ answer|linebreaks }}</p>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% if open_answers %}
+    <h4>Pytania otwarte:</h4>
+    {% for answer in open_answers %}
+    <div class="answer">
+        <p>{{ answer|linebreaks }}</p>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+{% endblock %}
+    

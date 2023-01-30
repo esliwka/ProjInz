@@ -18,29 +18,97 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, F, Count
 import io
 from polls.forms import PolishPasswordChangeForm, UserCreationForm
 import json
 from django.utils import timezone
 import datetime
+import pandas as pd
 
 class OpenQuestionForm(forms.Form):
-    question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Pytanie otwarte')
+    question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Dodaj pytanie otwarte')
 
 class ClosedQuestionForm(forms.Form):
-    question = forms.CharField(max_length=200, required=True, label='Pytanie zamknięte')
+    question = forms.CharField(max_length=200, required=True, label='Dodaj pytanie zamknięte')
 
 class ClosedQuestionAnswerForm(forms.Form):
-    answer = forms.CharField(max_length=200 , required=True, label='Odpowiedź')
+    answer = forms.CharField(max_length=200 , required=True, label='Dodaj odpowiedź')
 
 class AddRespondentForm(forms.Form):
     users = forms.ModelChoiceField(queryset=CustomUser.objects.all(), label='Użytkownik', empty_label=None)
     polls = forms.ModelChoiceField(queryset=Polls.objects.all(), label='Ankieta', empty_label=None, to_field_name='poll_name' )
 
+class VerifyTokenForm(forms.Form):
+    user_token = forms.CharField(label='Wprowadź token', max_length=66, min_length=66, required=True)
+
+def user_verify_integrity(request):
+    form = VerifyTokenForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            user_token = form.cleaned_data['user_token']
+            request.session['user_token2'] = user_token
+            # return redirect('poll_results', user_token=user_token)
+            return render(request, 'poll_results.html', {'user_token': user_token})
+    return render(request, 'user_verify_integrity.html', {'form': form})
+
+@login_required
+def poll_results(request):
+    user_token = request.POST.get('user_token')
+    # user_token = request.session.get('user_token2', None)
+    if user_token:
+        token_id = user_token[:10]
+        user_email = request.user.email
+        user_token_hash = user_token[10:]
+        #TokenPolls matching query does not exist.
+        if not TokenPolls.objects.filter(token_id=token_id):
+            return render(request, 'user_verify_integrity.html', {'error': 'Błąd: Nieprawidłowy token. Skontaktuj się z administratorem.'})
+        else:
+            token = TokenPolls.objects.get(token_id=token_id)
+        
+        open_answers = []
+        closed_answers = []
+        poll_id = ''
+        for key, value in json.loads(token.answers).items():
+                        token_poll_id, question_type, question_id = key.split('_')
+                        poll_id = token_poll_id
+                        break
+        database_hash = sec_hash(user_email + sec_hash(str(token_id)+str(poll_id)+str(token.answers))) 
+
+
+        if database_hash == user_token_hash:
+            for key, value in json.loads(token.answers).items():
+                        token_poll_id, question_type, question_id = key.split('_')
+                        if Polls.objects.filter(pk=token_poll_id):
+                            poll = Polls.objects.get(pk=token_poll_id)
+                            if not poll.poll_is_finished:
+                                return render(request, 'user_verify_integrity.html', {'error': 'Ankieta nie została jeszcze zamknięta.'})
+                            else:
+                                if question_type == 'open':
+                                    open_question = OpenQuestions.objects.get(pk=question_id)
+                                    open_answers.append(f'Pytanie: {open_question.question_text}\n Odpowiedź: {value["answer"]} \n')
+                                    
+                                elif question_type == 'closed':
+                                    closed_question = ClosedQuestions.objects.get(pk=question_id)
+                                    closed_answers.append(f'Pytanie: {closed_question.question_text}\n Odpowiedź: {value["answer"]} \n')
+                                    
+                                else:
+                                    return render(request, 'user_verify_integrity.html', {'error': 'Błąd: Nieprawidłowy typ pytania. Skontaktuj się z administratorem.'})
+                                
+                                user_message = 'Weryfikacja danych przebiegła pomyślnie. \n Dane w bazie danych są zgodne z danymi przesłanymi przez użytkownika.'
+                                user_fail_message = 'Weryfikacja danych nie powiodła się. \n Dane w bazie danych nie są zgodne z danymi przesłanymi przez użytkownika.'
+                                return render(request, 'poll_results.html', {'open_answers':open_answers, 'closed_answers':closed_answers, 'poll_name': poll.poll_name, 'user_message': user_message})
+                        else:
+                            messages.error(request, f"Twoje dane zostały naruszone w bazie danych. Administrator został powiadomiony.\n")
+                            return render(request, 'user_verify_integrity.html', {'error': 'Token validation failed. Please try again.!!!'})
+        else:
+            return render(request, 'user_verify_integrity.html', {'error': 'Weryfikacja danych nie powiodła się. \n Dane w bazie danych nie są zgodne z danymi przesłanymi przez użytkownika. Administrator został powiadomiony.'})
+    else:
+        return render(request, 'user_verify_integrity.html', {'error': 'Token validation failed. Please try again.'})
+
 @login_required
 def poll_response(request):
-    # Get the user's polls that they are a respondent of
+    # kto ma dostęp do ankiety
     user_polls = PollRespondents.objects.filter(user_id=request.user)
     user_polls_pks = list(user_polls.values_list("poll_id", flat=True))
     polls = Polls.objects.filter(pk__in=user_polls_pks)
@@ -72,16 +140,89 @@ def poll_response(request):
             user_email = request.user.email
             json_data = json.dumps(poll_data)
             user_token = generate_user_id_token()
-            request.session['user_token'] = user_token
-            TokenPolls.objects.create(token_id=user_token, answers=json_data)
-            UserPollStatus.objects.filter(user_id=request.user, poll_id=poll_id).update(answered=True)
-            json_data_hash = sec_hash(request.user.email + json_data)
             
-            cache.set(f'{request.user.id}_{poll_id}', json_data)
-            # json_data_hash = sec_hash(json_data_hash)
-            return render(request, 'poll_response_success.html', {'poll_id': poll_id, 'json_data_hash': user_token+json_data_hash, 'token_id': user_token})
+            json_data_hash = sec_hash(str(user_token) + str(poll_id) + str(json_data))
+            user_data_hash = sec_hash(user_email + json_data_hash)
+            request.session[user_email.split('@')[0]+user_email.split('@')[1].split('.')[0]] = user_token
+            if json_data_hash and json_data and user_token:
+                cache.set(user_token, [json_data_hash, json_data])
+            else:
+                messages.error(request, "Wystąpił błąd podczas przetwarzania danych.")
+                return redirect('poll_response', poll_id=poll_id)
 
+            TokenPolls.objects.create(token_id=user_token, answers=json_data, answers_hash=json_data_hash)
+            UserPollStatus.objects.filter(user_id=request.user, poll_id=poll_id).update(answered=True)
+            PollRespondents.objects.filter(user_id=request.user, poll_id=poll_id).update(answered=True)
             
+            test_variables = []
+            hashes_list = []
+            poll_respondents = PollRespondents.objects.filter(poll_id=poll_id)
+            poll_respondents_pks = list(poll_respondents.values_list("user_id", flat=True))
+            users = CustomUser.objects.filter(pk__in=poll_respondents_pks)
+            users_pks = list(users.values_list("id", flat=True))
+            test_variables.append(f'users_pks = {users_pks}')
+            user_poll_status = PollRespondents.objects.filter(user_id__in=users_pks, poll_id=poll_id)
+            for id in users_pks:
+                test_variables.append( f'{id} = {PollRespondents.objects.filter(user_id__in= users_pks , poll_id=poll_id).values_list("answered", flat=True)}'             
+                     )
+            user_poll_status_pks = list(user_poll_status.values_list("answered", flat=True))
+            test_variables.append(f'user_poll_status_pks = {user_poll_status_pks}')
+            
+            #user_poll_status_pks contains strings of numbers and users_pks contains True/False how to compare them? if False dont count it and if True count it
+
+            if len(user_poll_status_pks) == len([i for i in users_pks if i == True]):
+                Polls.objects.filter(pk=poll_id).update(poll_is_finished=True)
+                
+                test_variables.append(f'{poll_id} = poll_is_finished')
+                
+            if Polls.objects.get(pk=poll_id).poll_is_finished:
+                token_list = []
+                
+                for token in TokenPolls.objects.filter(poll_ended=False):
+                    # test_variables.append(token.token_id)
+                    
+                    json_data = json.loads(token.answers)
+                    for key, value in json_data.items():
+                        token_poll_id, question_type, question_id = key.split('_')
+                        test_variables.append(token_poll_id)
+                        test_variables.append(question_type)
+                        test_variables.append(question_id)
+                        if token_poll_id == poll_id:
+                            if question_type == 'open':
+                                open_question = OpenQuestions.objects.get(pk=question_id)
+                                OpenAnswers.objects.create(
+                                 question_id=open_question,
+                                  answer=value['answer'])
+                            elif question_type == 'closed':
+                                closed_question = ClosedQuestions.objects.get(pk=question_id)
+                                ClosedAnswers.objects.filter(
+                                 question_id=closed_question,
+                                  answer=value['answer']).update(times_chosen=F('times_chosen')+1)
+                            # token.poll_ended = True
+                            # token.save()
+                            token_list.append(token.token_id)
+                
+                token_list = list(set(token_list))
+                for item in token_list:
+                    # hashes_list.append([item, cache.get(item)[0]])
+                    # if TokenPolls.objects.get(token_id=item).answers_hash == cache.get(item)[0]:
+                        x = cache.get(item)
+                        y = TokenPolls.objects.get(token_id=item).answers_hash
+                        if x[0] != y:
+                            hashes_list.append([TokenPolls.objects.get(token_id=item).answers , 'Weryfikacja ankiety niepoprawna. Odpowiedzi użytkowników nie zgadzają się z odpowiedziami zapisanymi w bazie danych. Zastępuje błędne odpowiedzi poprawnymi odpowiedziami.'])
+                            if x:
+                                TokenPolls.objects.filter(token_id=item).update(answers_hash=x[0], answers=x[1])
+                                #then delete the TokenPolls object from database
+                        # cache.delete(item)
+                        
+                TokenPolls.objects.filter(token_id__in = token_list ).update(poll_ended=True)
+                if hashes_list:
+                    Polls.objects.filter(pk=poll_id).update(poll_conclusion=hashes_list)
+                else:
+                    Polls.objects.filter(pk=poll_id).update(poll_conclusion="Ankieta została zakończona. Wszystkie odpowiedzi zostały poprawnie zweryfikowane.")
+                    
+            return render(request, 'poll_response_success.html', {'poll_id': poll_id, 'json_data_hash': user_token+user_data_hash,
+             'token_id': user_token, 'token_list': token_list})
 
     # if request.method == 'POST':
     #     poll_id = request.POST.get('poll_id')
@@ -121,52 +262,79 @@ def poll_response(request):
         
         current_poll = Polls.objects.get(pk=poll_id)
         closed_questions = ClosedQuestions.objects.filter(poll_id=poll_id)
-        open_questions = OpenQuestions.objects.filter(poll_id=poll_id)    
+        open_questions = OpenQuestions.objects.filter(poll_id=poll_id)
+
         # Render the template with the polls, closed questions, and open questions
-        return render(request, 'poll_response.html', {'polls': polls, 'closed_questions': closed_questions, 'open_questions': open_questions,'poll_id':poll_id,'current_poll':current_poll})
+        return render(request, 'poll_response.html', {'polls': polls, 'closed_questions': closed_questions,
+         'open_questions': open_questions,'poll_id':poll_id,'current_poll':current_poll})
 
 
 @login_required
 def poll_response_download(request, poll_id):
-    json_data = cache.get(f'{request.user.id}_{poll_id}') # get the json data from the cache
-    hash_data = sec_hash(request.user.email + json_data)
-    token_id = request.session['user_token']
-    hash_data = token_id + hash_data
-    request.session.pop('user_token', None)
+    user_email = request.user.email
+    token_id = request.session[user_email.split('@')[0]+user_email.split('@')[1].split('.')[0]]
+    if token_id:
+        json_data = cache.get(token_id)
+        if json_data:
+            json_data = json_data[1]
+            json_data_hash = sec_hash(str(token_id) + str(poll_id) + str(json_data))
+            user_data_hash = sec_hash(request.user.email + json_data_hash)
+            hash_data = str(token_id) + str(user_data_hash)
+            # request.session.pop('user_token', None)
+            file = io.BytesIO(hash_data.encode())
+            poll_name = Polls.objects.get(id=poll_id).poll_name
+            user_first_and_last_name = request.user.first_name +'_'+ request.user.last_name
+            response = FileResponse(file, content_type='text/plain')
+            
+            response['Content-Disposition'] = f'attachment; filename="potwierdzenie_wypelnienia_({poll_name})_{user_first_and_last_name}.txt"'
+            return response
+        else:
+            return HttpResponse('Nie znaleziono danych do pobrania')
+    else:
+        return HttpResponse('Nie znaleziono danych do pobrania.')
+
+    hash_data = token_id + sec_hash(request.user.email + json_data)
+    # request.session.pop('user_token', None)
     file = io.BytesIO(hash_data.encode())
     poll_name = Polls.objects.get(id=poll_id).poll_name
     user_first_and_last_name = request.user.first_name +'_'+ request.user.last_name
     response = FileResponse(file, content_type='text/plain')
     
-    response['Content-Disposition'] = f'attachment; filename="{poll_id}_{poll_name}_{user_first_and_last_name}.txt"'
+    response['Content-Disposition'] = f'attachment; filename="potwierdzenie_wypelnienia_({poll_name})_{user_first_and_last_name}.txt"'
     return response
 
 @login_required
+def open_question_responses_download(request, question_id):
+    answers = OpenAnswers.objects.filter(question_id=question_id)
+    response = HttpResponse(content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename="odpowiedzi_na_pytania_otwarte.txt"'
+    for answer in answers:
+        response.write(answer.answer + '\n')
+    return response
+
+
+@login_required
 def poll_response_success(request, poll_id, json_data):
-    # poll_id = context.get('poll_id')
     token = request.session.get('token_id')
-    json_data = cache.get(f'{request.user.id}_{poll_id}') # get the json data from the cache
-    hash_data = sec_hash(request.user.email + json_data)
-    # file = io.StringIO(json_data)
-    # response = FileResponse(file, content_type='text/plain')
-    # response['Content-Disposition'] = 'attachment; filename="hash.txt"'
-    # cache.set(f'{request.user.id}_{poll_id}', json_data)
-    request.session.pop('user_token', None)
-    return render(request, 'poll_response_success.html', {'poll_id': poll_id, 'json_data_hash': token+hash_data})
+    json_data = cache.get(token) 
+    hash_data = token + sec_hash(request.user.email + json_data)
+    
+    # request.session.pop('user_token', None)
+    return render(request, 'poll_response_success.html', {'poll_id': poll_id, 'json_data_hash': hash_data})
 
 
 class PollForm(forms.Form):
-    poll_name = forms.CharField(max_length=200, label='Nazwa ankiety')
+    poll_name = forms.CharField(max_length=200, label='Nazwa ankiety', widget=forms.Textarea(attrs={'rows': 1, 'cols': 40}))
     poll_text = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}), required=False, label='Opis ankiety')
 
 class OpenQuestionForm(forms.Form):
-    question = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}), required=True, label='Pytanie otwarte')
+    question = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}), required=True, label='Dodaj pytanie otwarte')
 
 class ClosedQuestionForm(forms.Form):
-    question = forms.CharField(max_length=200, required=True, label='Pytanie zamknięte')
+    question = forms.CharField(max_length=200, required=True, label='Dodaj pytanie zamknięte')
 
 class ClosedQuestionAnswerForm(forms.Form):
-    answer = forms.CharField(max_length=200 , required=True, label='Odpowiedź')
+    answer = forms.CharField(max_length=200 , required=True, label='Dodaj odpowiedź')
 
 class AddRespondentForm(forms.Form):
     users = forms.ModelChoiceField(queryset=CustomUser.objects.all(), label='Użytkownik', empty_label=None)
@@ -205,12 +373,36 @@ def button_add_respondent(request, poll_id):
         user = CustomUser.objects.get(id=user_id)
         poll_respondent = PollRespondents(poll_id=poll, user_id=user)
         poll_respondent.save()
-        return redirect('user_home')
+         
+        
+        return redirect('poll_detail', poll_id=poll_id)
+        
     else:
         form = ButtonAddRespondentForm()
         form.fields['users'].queryset = CustomUser.objects.exclude(id=request.user.id)
 
-    return render(request, 'poll_detail.html', {'poll_id': poll_id})
+    return redirect('poll_detail', poll_id=poll_id)
+
+@login_required
+def button_add_respondent_edit(request, poll_id):
+    poll = get_object_or_404(Polls, pk=poll_id)
+
+    if request.method == 'POST':
+        form = ButtonAddRespondentForm(request.POST)
+        user_id = request.POST.get('user_id')
+        user = CustomUser.objects.get(id=user_id)
+        poll_respondent = PollRespondents(poll_id=poll, user_id=user)
+        poll_respondent.save()
+         
+        
+        return redirect('poll_edit', poll_id=poll_id)
+        
+    else:
+        form = ButtonAddRespondentForm()
+        form.fields['users'].queryset = CustomUser.objects.exclude(id=request.user.id)
+
+    return redirect('poll_edit', poll_id=poll_id)
+
 
 @login_required
 def poll_list(request):
@@ -243,19 +435,27 @@ def poll_detail(request, poll_id):
     return render(request, 'poll_detail.html', context)
 
 
+
+
 @login_required
 def create_poll(request):
     if request.method == 'POST':
         form = PollForm(request.POST)
+        
+
         if form.is_valid():
             end_time_string = request.POST.get('poll_end_time')
             tz = timezone.get_current_timezone()
             end_time = datetime.datetime.strptime(end_time_string, '%m/%d/%Y %I:%M %p')
             end_time = timezone.make_aware(end_time, tz)
+            if end_time < timezone.now():
+                messages.error(request, "Data zakończenia ankiety nie może być wcześniejsza niż aktualna.")
+                # redirect('create_poll', form=form)
+                return render(request, 'create_poll.html', {'form': form, 'error': 'Data zakończenia ankiety nie może być wcześniejsza niż aktualna.'})
             poll = Polls(poll_name=form.cleaned_data['poll_name'], poll_text=form.cleaned_data['poll_text'],
                          poll_end_time=end_time, poll_owner_id=request.user)
             poll.save()
-            return redirect('poll_list')
+            return redirect('user_home')
     else:
         form = PollForm()
     return render(request, 'create_poll.html', {'form': form})
@@ -302,7 +502,7 @@ def add_answer_to_closed(request, poll_id, question_id):
 def delete_poll(request, poll_id):
     poll = get_object_or_404(Polls, pk=poll_id)
     poll.delete()
-    return redirect('poll_list')
+    return redirect('user_home')
 
 @login_required
 def delete_closed_question(request, question_id):
@@ -335,8 +535,13 @@ def poll_edit(request, poll_id):
     closed_questions = ClosedQuestions.objects.filter(poll_id=poll)
     closed_questions_pks = list(ClosedQuestions.objects.filter(poll_id=poll).values_list("pk", flat=True))
     closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions_pks)
+    respondents_users_ids = PollRespondents.objects.filter(poll_id=poll).values_list("user_id", flat=True)
+    respondents = CustomUser.objects.filter(pk__in=respondents_users_ids)
+    users = CustomUser.objects.all()
     context = {
         'poll': poll,
+        'users': users,
+        'respondents': respondents,
         'open_questions': open_questions,
         'closed_questions': closed_questions,
         'closed_answers': closed_answers,
@@ -364,7 +569,7 @@ def unpublish_poll(request, poll_id):
     poll.poll_is_published = False
     poll.save()
     if request.user.is_authenticated:
-        return redirect('user_home')
+        return redirect('poll_detail', poll_id=poll_id)
     else:
         return redirect('index')
 
@@ -417,14 +622,6 @@ def move_answer_down(request, answer_id):
 
 
 
-def redis_test(request):
-    cache.set("key", "test value")
-    redis_response = cache.get('key')
-    # cache.close()
-    
-    return render(request, 'redis_test.html', {'redis_response': redis_response,'token': generate_user_id_token()})
-
-
 @login_required
 def user_home(request):
     # form = PasswordChangeForm(request.user)
@@ -432,12 +629,13 @@ def user_home(request):
     is_users = Q(user_id=request.user)
     is_answered = Q(answered=True)
     is_not_answered = Q(answered=False)
+    is_published = Q(poll_is_published=True)
     answered_polls_ids = PollRespondents.objects.filter(is_users & is_answered).values_list("poll_id")
     not_answered_polls_ids = PollRespondents.objects.filter(is_users & is_not_answered).values_list("poll_id")
     user_poll_ids = Polls.objects.filter(poll_owner_id_id=request.user).values_list("id")
     user_polls = Polls.objects.filter(id__in=user_poll_ids)
     answered_polls = Polls.objects.filter(id__in=answered_polls_ids)
-    not_answered_polls = Polls.objects.filter(id__in=not_answered_polls_ids)
+    not_answered_polls = Polls.objects.filter(id__in=not_answered_polls_ids).filter(is_published)
     context = {
         'user': request.user,
         'hashed_email': hashed_email,
@@ -497,7 +695,6 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('index')
-
 
 from django.contrib.auth.hashers import make_password
 def register_user(request):
