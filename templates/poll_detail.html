@@ -34,13 +34,14 @@
   </div>
   
     {% if poll.poll_is_published %}
+    {% if not poll.poll_is_finished %}
     <div class="span2">
       <form method="get" action="{% url 'unpublish_poll' poll.id %}">
         <input type="submit" value="Ukryj ankietę i wróć do edycji" class="btn btn-primary ml-3">
       </form>
     </div>
   {% endif %}
-  
+  {% endif %}
   <div class="span2">
     <a href="{% url 'user_home' %}" class="btn btn-secondary ml-3">Powrót</a>
   </div>
@@ -52,8 +53,20 @@
   <ul>
     {% for respondent in respondents %}
 
+    <li><p>{{ respondent.first_name }} {{ respondent.last_name }} - {{ respondent.email }} 
 
-    <li><p>{{ respondent.email }}</p></li>
+      {% for key, value in respondents_dict.items %}
+        {% if key == respondent.id %}
+          {% if value %}
+            <span style="color:rgb(9, 116, 32)"> - odpowiedział</span>
+          {% else %}
+            <span style="color:rgb(116, 9, 9)"> - nie odpowiedział</span>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
+    </p></li>
+
     {% endfor %}
   </ul>
   

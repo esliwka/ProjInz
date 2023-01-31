@@ -28,12 +28,25 @@
 
 
 <br><br>
-  <p>Opis ankiety: {{ poll.poll_text }}</p>
+  <p><b>Opis ankiety:</b> {{ poll.poll_text }}</p>
   <br>
   <h3>Przypisani użytkownicy:</h3>
   <ul>
     {% for respondent in respondents %}
-    <li><p>{{ respondent.email }}</p></li>
+
+    <li><p>{{ respondent.first_name }} {{ respondent.last_name }} - {{ respondent.email }} 
+
+      {% for key, value in respondents_dict.items %}
+        {% if key == respondent.id %}
+          {% if value %}
+            <span style="color:rgb(9, 116, 32)"> - odpowiedział</span>
+          {% else %}
+            <span style="color:rgb(116, 9, 9)"> - nie odpowiedział</span>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </p></li>
+
     {% endfor %}
   </ul>
   
@@ -55,11 +68,12 @@
 </form>
 
   {% endif %}
+  <br>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
   <h3>Pytania zamknięte</h3>
   <ol>
   {% for closed_question in closed_questions %}
-    <li><p>{{ closed_question.question_text }} <a href="{% url 'delete_closed_question' question_id=closed_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a></p>
+    <li><p><b>{{ closed_question.question_text }}</b> <a href="{% url 'delete_closed_question' question_id=closed_question.id %}" class="text-red"><i style="color:red" class="fa-sharp fa-solid fa-xmark"></i></a></p>
 
 
     <ol>
@@ -77,12 +91,12 @@
         </li>
       {%  endif %}
     {% endfor %}
-    </ol>
+  </ol><br>
     <form method="post" action="{% url 'add_answer_to_closed' poll.id closed_question.id %}">
       {% csrf_token %}
       {{ closed_question_answer_form.as_p }}
       <input type="submit" value="Dodaj odpowiedź">
-    </form>
+    </form><br><br>
   {% empty %}
     <p>Brak pytań zamkniętych dla tej ankiety.</p>
   {% endfor %}

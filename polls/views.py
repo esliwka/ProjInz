@@ -25,6 +25,7 @@ import json
 from django.utils import timezone
 import datetime
 import pandas as pd
+from django.contrib.admin.views.decorators import staff_member_required
 
 class OpenQuestionForm(forms.Form):
     question = forms.CharField(max_length=1000, widget=forms.Textarea, required=True, label='Dodaj pytanie otwarte')
@@ -51,6 +52,7 @@ def user_verify_integrity(request):
             # return redirect('poll_results', user_token=user_token)
             return render(request, 'poll_results.html', {'user_token': user_token})
     return render(request, 'user_verify_integrity.html', {'form': form})
+
 
 @login_required
 def poll_results(request):
@@ -215,13 +217,14 @@ def poll_response(request):
                         x = cache.get(item, None)
                         y = TokenPolls.objects.get(token_id=item).answers
                         y = sec_hash(str(item) + str(poll_id) + str(y))
-                        if x[0] != y:
-                            hashes_list.append(TokenPolls.objects.get(token_id=item).answers)
-                            if x:
-                                TokenPolls.objects.filter(token_id=item).update(answers_hash=x[0], answers=x[1])
-                            
-                                #then delete the TokenPolls object from database
-                        # cache.delete(item)
+                        if x:
+                            if x[0] != y:
+                                hashes_list.append(TokenPolls.objects.get(token_id=item).answers)
+                                if x:
+                                    TokenPolls.objects.filter(token_id=item).update(answers_hash=x[0], answers=x[1])
+                                
+                                    #then delete the TokenPolls object from database
+                            # cache.delete(item)
                         
                 TokenPolls.objects.filter(token_id__in = token_list ).update(poll_ended=True)
                 if hashes_list:
@@ -294,10 +297,10 @@ def poll_response_download(request, poll_id):
             # request.session.pop('user_token', None)
             file = io.BytesIO(hash_data.encode())
             poll_name = Polls.objects.get(id=poll_id).poll_name
-            user_first_and_last_name = request.user.first_name +'_'+ request.user.last_name
+            user_first_and_last_name = request.user.first_name[0:1] +'_'+ request.user.last_name
             response = FileResponse(file, content_type='text/plain')
             
-            response['Content-Disposition'] = f'attachment; filename="potwierdzenie_wypelnienia_({poll_name})_{user_first_and_last_name}.txt"'
+            response['Content-Disposition'] = f'attachment; filename="potwierdzenie_wypelnienia_({poll_name[0:10]})_{user_first_and_last_name}.txt"'
             return response
         else:
             return HttpResponse('Nie znaleziono danych do pobrania')
@@ -317,8 +320,9 @@ def poll_response_download(request, poll_id):
 @login_required
 def open_question_responses_download(request, question_id):
     answers = OpenAnswers.objects.filter(question_id=question_id)
+    question_text = OpenQuestions.objects.get(id=question_id).question_text[0:20]
     response = HttpResponse(content_type='text/plain')
-    response['Content-Disposition'] = 'attachment; filename="odpowiedzi_na_pytania_otwarte.txt"'
+    response['Content-Disposition'] = f'attachment; filename="odpowiedzi_na_pytanie_otwarte_{question_text}.txt"'
     for answer in answers:
         response.write(answer.answer + '\n')
     return response
@@ -432,6 +436,15 @@ def poll_detail(request, poll_id):
     closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions_pks)
     respondents_users_ids = PollRespondents.objects.filter(poll_id=poll).values_list("user_id", flat=True)
     respondents = CustomUser.objects.filter(pk__in=respondents_users_ids)
+    # create a dict of all respondents and if they answered the poll
+    respondents_dict = {}
+    for user_id in respondents_users_ids:
+        this_respond = PollRespondents.objects.get(poll_id=poll, user_id = user_id)
+        if this_respond.answered == True:
+            respondents_dict[int(user_id)] = True
+        else:
+            respondents_dict[int(user_id)] = False
+
     users = CustomUser.objects.all()
     context = {
         'poll': poll,
@@ -441,13 +454,14 @@ def poll_detail(request, poll_id):
         'closed_answers': closed_answers,
         'respondents': respondents,
         'users': users,
+        'respondents_dict': respondents_dict,
         
     }
     return render(request, 'poll_detail.html', context)
 
 
 
-
+@staff_member_required
 @login_required
 def create_poll(request):
     if request.method == 'POST':
@@ -548,12 +562,20 @@ def poll_edit(request, poll_id):
     closed_answers = ClosedAnswers.objects.filter(question_id__in=closed_questions_pks)
     respondents_users_ids = PollRespondents.objects.filter(poll_id=poll).values_list("user_id", flat=True)
     respondents = CustomUser.objects.filter(pk__in=respondents_users_ids)
+    respondents_dict = {}
+    for user_id in respondents_users_ids:
+        this_respond = PollRespondents.objects.get(poll_id=poll, user_id = user_id)
+        if this_respond.answered == True:
+            respondents_dict[int(user_id)] = True
+        else:
+            respondents_dict[int(user_id)] = False
     users = CustomUser.objects.all()
     context = {
         'poll': poll,
         'users': users,
         'respondents': respondents,
         'open_questions': open_questions,
+        'respondents_dict': respondents_dict,
         'closed_questions': closed_questions,
         'closed_answers': closed_answers,
         'open_question_form': OpenQuestionForm(),

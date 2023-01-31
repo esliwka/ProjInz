@@ -13,11 +13,13 @@
             <input class="btn btn-primary" type="submit" value="Zmień hasło" >
         </form>
         </div>
+        {% if user.is_staff %}
         <div class="span2">
           <form method="get" action="{% url 'create_poll' %}" class="container">
             <input class="btn btn-info ml-3" type="submit" value="Stwórz ankietę" >
           </form>
         </div>
+        {% endif %}
       </div>
     
 
